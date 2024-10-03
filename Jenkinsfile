@@ -8,7 +8,7 @@ pipeline{
         }
         stage('depp'){
             when { 
-                branch: "deployment"                
+                branch "deployment"                
         }
         steps {
                 echo "Preparing for deployment"
