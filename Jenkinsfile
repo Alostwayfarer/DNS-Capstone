@@ -9,7 +9,9 @@ pipeline {
     stages {
         stage('Checkout') {
     
-                    url: "https://github.com/Alostwayfarer/DNS-Capstone.git",
+                    sh """ 
+                    git clone https://github.com/Alostwayfarer/DNS-Capstone.git 
+                    """
 
         }
 
