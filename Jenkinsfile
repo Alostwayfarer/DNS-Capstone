@@ -8,10 +8,11 @@ pipeline {
     
     stages {
         stage('Checkout') {
-    
-                    sh """ 
-                    git clone https://github.com/Alostwayfarer/DNS-Capstone.git 
-                    """
+                steps{
+                        sh """ 
+                        git clone https://github.com/Alostwayfarer/DNS-Capstone.git 
+                        """
+                }
 
         }
 
