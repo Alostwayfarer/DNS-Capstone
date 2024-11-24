@@ -1,42 +1,45 @@
 pipeline {
     agent any
-
+    
+    environment {
+        BRANCH_NAME = "${env.BRANCH_NAME}"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+    
     stages {
         stage('Checkout') {
             steps {
-                // Checkout the code from the provided GitHub repository
-                git branch: 'deployment', url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
+                    url: 'https://github.com/Alostwayfarer/DNS-Capstone',
+                    branch: "${BRANCH_NAME}"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Docker') {
             steps {
                 script {
-                    // Navigate to the 'build-server-api' folder
-                    dir('build-server api') {
-                        // Build the Docker image from the Dockerfile in 'build-server-api'
-                        sh 'docker build -t build-server-api-image .'
+                    def imageName
+                    switch(BRANCH_NAME) {
+                        case 'frontend':
+                            imageName = "frontend"
+                            dockerfilePath = "./frontend/Dockerfile"
+                            break
+                        case 'client-api':
+                            imageName = "client-api"
+                            dockerfilePath = "./api/Dockerfile"
+                            break
+                        case 'reverse-proxy':
+                            imageName = "reverse-proxy"
+                            dockerfilePath = "./proxy/Dockerfile"
+                            break
+                        default:
+                            error("Branch ${BRANCH_NAME} not configured for build")
                     }
+                    
+                    sh """
+                        echo 'Building Docker Image for ${BRANCH_NAME}'
+                    """
                 }
             }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    // Run the Docker container from the built image
-                    sh 'docker run -d -p 3000:3000 build-server-api-image'
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Docker container is up and running!'
-        }
-        failure {
-            echo 'Build or Docker run failed.'
         }
     }
 }
