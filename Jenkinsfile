@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                    url: 'https://github.com/Alostwayfarer/DNS-Capstone',
+                    url: 'https://github.com/Alostwayfarer/DNS-Capstone.git',
                     branch: "${BRANCH_NAME}"
             }
         }
