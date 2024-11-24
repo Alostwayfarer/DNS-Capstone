@@ -9,8 +9,8 @@ pipeline {
     stages {
         stage('Checkout') {
     
-                    url: 'https://github.com/Alostwayfarer/DNS-Capstone.git',
-                    branch: "${BRANCH_NAME}"
+                    url: "https://github.com/Alostwayfarer/DNS-Capstone.git",
+
         }
 
         stage('Build Docker') {
