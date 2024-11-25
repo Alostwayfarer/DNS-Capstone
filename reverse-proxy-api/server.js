@@ -4,6 +4,9 @@ const app = express();
 
 const port = process.env.PORT || 8080;
 const proxy = httpproxy.createProxy();
+
+const http = require("http");
+
 const checkHealth = (url) =>
     new Promise((resolve) => {
         http.get(url, (res) => resolve(res.statusCode === 200)).on(
@@ -26,8 +29,8 @@ app.use(async (req, res) => {
     const subdomain = parts[0];
     const redirectTo =
         subdomain === "api"
-            ? "https://niituniversity.in/"
-            : "https://niituniversity.in/";
+            ? "http://nee-eg-lb-817668544.ap-south-1.elb.amazonaws.com"
+            : "http://nee-eg-lb-817668544.ap-south-1.elb.amazonaws.com";
 
     const isHealthy = await checkHealth(redirectTo);
     if (!isHealthy) {
