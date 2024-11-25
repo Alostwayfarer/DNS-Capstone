@@ -4,8 +4,15 @@ const app = express();
 
 const port = process.env.PORT || 8080;
 const proxy = httpproxy.createProxy();
+const checkHealth = (url) =>
+    new Promise((resolve) => {
+        http.get(url, (res) => resolve(res.statusCode === 200)).on(
+            "error",
+            () => resolve(false)
+        );
+    });
 
-app.use((req, res) => {
+app.use(async (req, res) => {
     const hostname = req.hostname;
     const parts = hostname.split(".");
 
@@ -19,8 +26,13 @@ app.use((req, res) => {
     const subdomain = parts[0];
     const redirectTo =
         subdomain === "api"
-            ? "http://junior-demo-lb-1475581589.ap-south-1.elb.amazonaws.com/"
-            : "http://frontend-baba-lb-1898478087.ap-south-1.elb.amazonaws.com/";
+            ? "https://niituniversity.in/"
+            : "https://niituniversity.in/";
+
+    const isHealthy = await checkHealth(redirectTo);
+    if (!isHealthy) {
+        return res.status(502).json({ error: "Target server is unreachable." });
+    }
     return proxy.web(req, res, { target: redirectTo, changeOrigin: true });
 });
 
