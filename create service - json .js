@@ -3,9 +3,9 @@ import { ECSClient, CreateServiceCommand } from "@aws-sdk/client-ecs"; // ES Mod
 const client = new ECSClient(config);
 const input = {
     // CreateServiceRequest
-    cluster: "STRING_VALUE",
-    serviceName: "STRING_VALUE", // required
-    taskDefinition: "STRING_VALUE",
+    cluster: process.env.ECS_CLUSTER_NAME,
+    serviceName: "user webiste name ", // required
+    taskDefinition: "STRING_VALUE", // something i decice
     loadBalancers: [
         // LoadBalancers
         {
@@ -16,26 +16,27 @@ const input = {
             containerPort: Number("int"),
         },
     ],
-    serviceRegistries: [
-        // ServiceRegistries
-        {
-            // ServiceRegistry
-            registryArn: "STRING_VALUE",
-            port: Number("int"),
-            containerName: "STRING_VALUE",
-            containerPort: Number("int"),
-        },
-    ],
-    desiredCount: Number("int"),
-    clientToken: "STRING_VALUE",
-    launchType: "EC2" || "FARGATE" || "EXTERNAL",
+    // serviceRegistries: [
+    //     // ServiceRegistries
+    //     {
+    //         // ServiceRegistry
+    //         registryArn: "STRING_VALUE",
+    //         port: Number("int"),
+    //         containerName: "STRING_VALUE",
+    //         containerPort: Number("int"),
+    //     },
+    // ],
+    desiredCount: 3,
+    // clientToken: "STRING_VALUE",
+
     capacityProviderStrategy: [
+        // confused
         // CapacityProviderStrategy
         {
             // CapacityProviderStrategyItem
-            capacityProvider: "STRING_VALUE", // required
-            weight: Number("int"),
-            base: Number("int"),
+            capacityProvider: "FARGATE", // required
+            weight: 1,
+            base: 0,
         },
     ],
     platformVersion: "LATEST",
