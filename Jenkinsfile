@@ -13,12 +13,12 @@ pipeline {
     stages {
         stage('Initialize') {
             steps {
-                sh 'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 311141548911.dkr.ecr.ap-south-1.amazonaws.com'
+                sh "aws configure list"
                 echo "Building the app"
             
         }
         }
-        }
+        
         stage('Build client-api') {
             when {
                 branch 'client-api'
@@ -54,4 +54,4 @@ pipeline {
                 }
             }
         }
-    
+    }
