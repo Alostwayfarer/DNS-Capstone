@@ -26,7 +26,7 @@ pipeline {
                 steps {
                     script {
                         // dockerimage = docker.build( "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"+":${BUILD_NUMBER}", "./client-api")
-                        sh "docker build -t client-api ./client-api"
+                        sh "docker build -t client-api:${BUILD_NUMBER} ./client-api"
 
                         echo "build complete for client"
 
