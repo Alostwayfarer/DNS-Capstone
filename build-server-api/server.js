@@ -5,12 +5,7 @@ const { exec } = require("child_process");
 const { promisify } = require("util");
 const cors = require("cors");
 const execAsync = promisify(exec);
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-
-const {prismaClient} = require("@prisma/client");
-const { PrismaClient } = require('@prisma/client');
-
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 // ///////////////////AWS
@@ -60,11 +55,11 @@ const ecsClient = new ECSClient(awsCredentials);
 const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
 
 // Create User
-app.post('/users', async (req, res) => {
+app.post("/users", async (req, res) => {
     try {
         const { name } = req.body;
         const user = await prisma.user.create({
-            data: { name }
+            data: { name },
         });
         res.json(user);
     } catch (error) {
@@ -73,7 +68,7 @@ app.post('/users', async (req, res) => {
 });
 
 // Create Deployment
-app.post('/deployments', async (req, res) => {
+app.post("/deployments", async (req, res) => {
     try {
         const { github_link, subdomain, deployment_type, userId } = req.body;
         const deployment = await prisma.deployment.create({
@@ -81,8 +76,8 @@ app.post('/deployments', async (req, res) => {
                 github_link,
                 subdomain,
                 deployment_type,
-                userId
-            }
+                userId,
+            },
         });
         res.json(deployment);
     } catch (error) {
@@ -91,15 +86,15 @@ app.post('/deployments', async (req, res) => {
 });
 
 // Create Proxy
-app.post('/proxies', async (req, res) => {
+app.post("/proxies", async (req, res) => {
     try {
         const { deployment_id, subdomain, AWS_link } = req.body;
         const proxy = await prisma.proxy.create({
             data: {
                 deployment_id,
                 subdomain,
-                AWS_link
-            }
+                AWS_link,
+            },
         });
         res.json(proxy);
     } catch (error) {
@@ -108,32 +103,31 @@ app.post('/proxies', async (req, res) => {
 });
 
 // Get all data with relationships
-app.get('/data', async (req, res) => {
+app.get("/data", async (req, res) => {
     try {
         const data = await prisma.user.findMany({
             include: {
                 deployments: {
                     include: {
-                        Proxy: true
-                    }
-                }
-            }
+                        Proxy: true,
+                    },
+                },
+            },
         });
         res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-
 
 //
 
 // Create User
-app.post('/users', async (req, res) => {
+app.post("/users", async (req, res) => {
     try {
         const { name } = req.body;
         const user = await prisma.user.create({
-            data: { name }
+            data: { name },
         });
         res.json(user);
     } catch (error) {
@@ -142,7 +136,7 @@ app.post('/users', async (req, res) => {
 });
 
 // Create Deployment
-app.post('/deployments', async (req, res) => {
+app.post("/deployments", async (req, res) => {
     try {
         const { github_link, subdomain, deployment_type, userId } = req.body;
         const deployment = await prisma.deployment.create({
@@ -150,8 +144,8 @@ app.post('/deployments', async (req, res) => {
                 github_link,
                 subdomain,
                 deployment_type,
-                userId
-            }
+                userId,
+            },
         });
         res.json(deployment);
     } catch (error) {
@@ -160,15 +154,15 @@ app.post('/deployments', async (req, res) => {
 });
 
 // Create Proxy
-app.post('/proxies', async (req, res) => {
+app.post("/proxies", async (req, res) => {
     try {
         const { deployment_id, subdomain, AWS_link } = req.body;
         const proxy = await prisma.proxy.create({
             data: {
                 deployment_id,
                 subdomain,
-                AWS_link
-            }
+                AWS_link,
+            },
         });
         res.json(proxy);
     } catch (error) {
@@ -177,23 +171,23 @@ app.post('/proxies', async (req, res) => {
 });
 
 // Get all data with relationships
-app.get('/data', async (req, res) => {
+app.get("/data", async (req, res) => {
     try {
         const data = await prisma.user.findMany({
             include: {
                 deployments: {
                     include: {
-                        Proxy: true
-                    }
-                }
-            }
+                        Proxy: true,
+                    },
+                },
+            },
         });
         res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-// healthroute 
+// healthroute
 app.get("/health", async (req, res) => {
     try {
         // Check ECR
