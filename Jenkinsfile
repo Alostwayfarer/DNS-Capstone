@@ -13,6 +13,7 @@ pipeline {
     stages {
         stage('Initialize') {
             steps {
+                sh 'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 311141548911.dkr.ecr.ap-south-1.amazonaws.com'
                 echo "Building the app"
             
         }
