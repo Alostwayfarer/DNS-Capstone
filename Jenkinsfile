@@ -25,13 +25,13 @@ pipeline {
             }
                 steps {
                     script {
-                        // dockerimage = docker.build( app_client_Registry, "./client-api")
+                        // dockerimage = docker.build( "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"+":${BUILD_NUMBER}", "./client-api")
                         sh "docker build -t client-api ./client-api"
 
                         echo "build complete for client"
 
-                        sh "docker tag client-api:latest 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:latest"
-                        sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:latest"
+                        sh "docker tag client-api:${BUILD_NUMBER} 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${BUILD_NUMBER}"
+                        sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${BUILD_NUMBER}"
                         echo "docker push complete for client-api"
 
                     
