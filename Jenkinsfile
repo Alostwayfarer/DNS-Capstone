@@ -13,26 +13,28 @@ pipeline {
     stages {
         stage('Initialize') {
             steps {
-                // sh 'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 311141548911.dkr.ecr.ap-south-1.amazonaws.com'
                 sh "aws configure list"
                 echo "Building the app"
-            }
+            
         }
-
+        }
+        
         stage('Build client-api') {
             when {
                 branch 'client-api'
             }
                 steps {
                     script {
-                        dockerimage = docker.build( app_client_Registry, "./client-api")
+                        // dockerimage = docker.build( app_client_Registry, "./client-api")
+                        sh "docker build -t client-api ./client-api"
+
                         echo "build complete for client"
-                        docker.withRegistry(RegistryURL, registryCredential) {
-                            dockerimage.push("${BRANCH_NAME}")
-                            dockerimage.push('latest')
+
+                        sh "docker tag client-api:latest 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:latest"
+                        sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:latest"
                         echo "docker push complete for client-api"
 
-                    }
+                    
                 }
             }
         }
@@ -42,16 +44,18 @@ pipeline {
             }
                 steps {
                     script {
-                        dockerimage = docker.build( app_frontend_Registry, "./front-deadend")
+                        // dockerimage = docker.build( app_frontend_Registry, "./front-deadend")
+                        sh "docker build -t dns-deploy ./front-deadend"
                         echo "build complete for frontend"
-                        docker.withRegistry(RegistryURL, registryCredential) {
-                            dockerimage.push("${BRANCH_NAME}")
-                            dockerimage.push('latest')
+                        sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/dns-deploy:latest"
+                        sh "docker tag dns-deploy:latest 311141548911.dkr.ecr.ap-south-1.amazonaws.com/dns-deploy:latest"
                         echo "docker push complete for frontend"
 
-                        }
+                        
                     }
                 }
             }
         }
     }
+
+
