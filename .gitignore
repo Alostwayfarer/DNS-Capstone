@@ -1,3 +1,4 @@
 client-api/node_modules
 reverse-proxy api/node_modules
 build-server api/node_modules
+/node_modules
