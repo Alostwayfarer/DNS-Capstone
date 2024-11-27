@@ -6,35 +6,35 @@ const { promisify } = require("util");
 const cors = require("cors");
 const execAsync = promisify(exec);
 
-const {prismaClient} = require("@prisma/client");
-const { PrismaClient } = require('@prisma/client');
+const { prismaClient } = require("@prisma/client");
+const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
 // ///////////////////AWS
 const {
-    ECRClient,
-    ListImagesCommand,
-    DescribeRegistryCommand,
-    DescribeRepositoriesCommand,
-    CreateRepositoryCommand,
-    GetAuthorizationTokenCommand,
-    ECR,
+  ECRClient,
+  ListImagesCommand,
+  DescribeRegistryCommand,
+  DescribeRepositoriesCommand,
+  CreateRepositoryCommand,
+  GetAuthorizationTokenCommand,
+  ECR,
 } = require("@aws-sdk/client-ecr");
 
 const {
-    ECSClient,
-    CreateServiceCommand,
-    RegisterTaskDefinitionCommand,
-    ListClustersCommand,
-    ListTaskDefinitionsCommand,
+  ECSClient,
+  CreateServiceCommand,
+  RegisterTaskDefinitionCommand,
+  ListClustersCommand,
+  ListTaskDefinitionsCommand,
 } = require("@aws-sdk/client-ecs");
 
 const {
-    ElasticLoadBalancingV2Client,
-    CreateLoadBalancerCommand,
-    CreateListenerCommand,
-    CreateTargetGroupCommand,
+  ElasticLoadBalancingV2Client,
+  CreateLoadBalancerCommand,
+  CreateListenerCommand,
+  CreateTargetGroupCommand,
 } = require("@aws-sdk/client-elastic-load-balancing-v2"); // CommonJS import
 // /////////////////////AWS END
 require("dotenv").config();
@@ -46,9 +46,9 @@ app.use(cors());
 const port = process.env.PORT || 3000;
 
 const awsCredentials = {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
 };
 
 const ecrClient = new ECRClient(awsCredentials);
@@ -59,200 +59,227 @@ const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
 //
 
 // Create User
-app.post('/users', async (req, res) => {
-    try {
-        const { name } = req.body;
-        const user = await prisma.user.create({
-            data: { name }
-        });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+app.post("/users", async (req, res) => {
+  try {
+    const { name } = req.body;
+    const user = await prisma.user.create({
+      data: { name },
+    });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Create Deployment
-app.post('/deployments', async (req, res) => {
-    try {
-        const { github_link, subdomain, deployment_type, userId } = req.body;
-        const deployment = await prisma.deployment.create({
-            data: {
-                github_link,
-                subdomain,
-                deployment_type,
-                userId
-            }
-        });
-        res.json(deployment);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+app.post("/deployments", async (req, res) => {
+  try {
+    const { github_link, subdomain, deployment_type, userId } = req.body;
+    const deployment = await prisma.deployment.create({
+      data: {
+        github_link,
+        subdomain,
+        deployment_type,
+        userId,
+      },
+    });
+    res.json(deployment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Create Proxy
-app.post('/proxies', async (req, res) => {
-    try {
-        const { deployment_id, subdomain, AWS_link } = req.body;
-        const proxy = await prisma.proxy.create({
-            data: {
-                deployment_id,
-                subdomain,
-                AWS_link
-            }
-        });
-        res.json(proxy);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+app.post("/proxies", async (req, res) => {
+  try {
+    const { deployment_id, subdomain, AWS_link } = req.body;
+    const proxy = await prisma.proxy.create({
+      data: {
+        deployment_id,
+        subdomain,
+        AWS_link,
+      },
+    });
+    res.json(proxy);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Get all data with relationships
-app.get('/data', async (req, res) => {
-    try {
-        const data = await prisma.user.findMany({
-            include: {
-                deployments: {
-                    include: {
-                        Proxy: true
-                    }
-                }
-            }
-        });
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+app.get("/data", async (req, res) => {
+  try {
+    const data = await prisma.user.findMany({
+      include: {
+        deployments: {
+          include: {
+            Proxy: true,
+          },
+        },
+      },
+    });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
-// healthroute 
+// healthroute
 app.get("/health", async (req, res) => {
-    try {
-        // Check ECR
-        const ecrCommand = new DescribeRegistryCommand({});
-        const ecrResponse = await ecrClient.send(ecrCommand);
+  try {
+    // Check ECR
+    const ecrCommand = new DescribeRegistryCommand({});
+    const ecrResponse = await ecrClient.send(ecrCommand);
 
-        // Check ECS
-        const ecsCommand = new ListClustersCommand({});
-        const ecsResponse = await ecsClient.send(ecsCommand);
+    // Check ECS
+    const ecsCommand = new ListClustersCommand({});
+    const ecsResponse = await ecsClient.send(ecsCommand);
 
-        res.status(200).json({
-            status: "OK",
-            ecr: ecrResponse,
-            ecs: ecsResponse,
-        });
-    } catch (error) {
-        res.status(500).json({ status: "Error", message: error.message });
-    }
+    res.status(200).json({
+      status: "OK",
+      ecr: ecrResponse,
+      ecs: ecsResponse,
+    });
+  } catch (error) {
+    res.status(500).json({ status: "Error", message: error.message });
+  }
 });
 
 app.get("/list-task", async (req, res) => {
-    try {
-        const input = {};
-        const command = new ListTaskDefinitionsCommand(input);
-        const response = await ecsClient.send(command);
-        console.log("res", response);
+  try {
+    const input = {};
+    const command = new ListTaskDefinitionsCommand(input);
+    const response = await ecsClient.send(command);
+    console.log("res", response);
 
-        res.status(200).json({ taskdef: response });
-    } catch (e) {
-        console.log(e);
-        res.status(500).json({ error: e });
-    }
+    res.status(200).json({ taskdef: response });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ error: e });
+  }
 });
 
 app.get("/images", async (req, res) => {
-    try {
-        const input = {};
-        const command = new DescribeRepositoriesCommand(input);
-        const response = await ecrClient.send(command);
-        console.log("res", response);
-        const { repositories } = await ecrClient.send(
-            new DescribeRepositoriesCommand({})
-        );
-        const imagePromises = repositories.map(async (repo) => {
-            const images = await ecrClient.send(
-                new ListImagesCommand({
-                    repositoryName: repo.repositoryName,
-                    filter: { tagStatus: "TAGGED" },
-                })
-            );
-            return { repository: repo.repositoryName, images: images.imageIds };
-        });
+  try {
+    const input = {};
+    const command = new DescribeRepositoriesCommand(input);
+    const response = await ecrClient.send(command);
+    console.log("res", response);
+    const { repositories } = await ecrClient.send(
+      new DescribeRepositoriesCommand({})
+    );
+    const imagePromises = repositories.map(async (repo) => {
+      const images = await ecrClient.send(
+        new ListImagesCommand({
+          repositoryName: repo.repositoryName,
+          filter: { tagStatus: "TAGGED" },
+        })
+      );
+      return { repository: repo.repositoryName, images: images.imageIds };
+    });
 
-        const repositoryImages = await Promise.all(imagePromises);
-        res.status(200).json({
-            one: repositories,
-            repositories: repositoryImages,
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
-    }
+    const repositoryImages = await Promise.all(imagePromises);
+    res.status(200).json({
+      one: repositories,
+      repositories: repositoryImages,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post("/deploy-repo", async (req, res) => {
-    const { repoUrl, DeploymentName, port } = req.body;
-    const tempDir = path.join(__dirname, "temp-build", DeploymentName);
-    const dockerFilePath = path.join(tempDir, "Dockerfile");
-    const ECRrepositoryName = `${DeploymentName}-repo`;
-    const imageTag = "latest";
+  const { repoUrl, DeploymentName, port } = req.body;
+  const tempDir = path.join(__dirname, "temp-build", DeploymentName);
+  const dockerFilePath = path.join(tempDir, "Dockerfile");
+  const ECRrepositoryName = `${DeploymentName}-repo`;
+  const imageTag = "latest";
+  try {
+    const { PrismaClient } = require("@prisma/client");
+    const prisma = new PrismaClient();
 
+    async function main() {
+      const randomUser = {
+        name: "Shweta",
+        email: "Shweta@gmail.com",
+        // name: faker.name.findName(),
+        // email: faker.internet.email(),
+      };
+
+      const user = await prisma.user.create({
+        data: randomUser,
+      });
+
+      console.log("Random user added:", user);
+    }
+
+
+    console.log("Running main...");
+
+    main()
+      .catch((e) => {
+        console.error(e);
+        throw e;
+      })
+      .finally(async () => {
+        await prisma.$disconnect();
+      });
+    console.log("main completed");
+    // deploemny  - sudbdomain DEPloyemnt type , user id, , gh link
+
+    var ecrResponse = null;
+    var taskDefResponse = null;
+    var serviceResponse = null;
+    var loadBalancerResponse = null;
+
+    console.log(
+      `Starting deployment for ${DeploymentName}... ${ECRrepositoryName}`
+    );
+    // Create ECR repository
+    const ECRinput = {
+      repositoryName: ECRrepositoryName, // required
+      // tags: [
+      //     // TagList
+      //     {
+      //         // Tag
+      //         Key: "STRING_VALUE", // required
+      //         Value: "STRING_VALUE", // required
+      //     },
+      // ],
+      imageTagMutability: "MUTABLE",
+      imageScanningConfiguration: {
+        // ImageScanningConfiguration
+        scanOnPush: true,
+      },
+      encryptionConfiguration: {
+        // EncryptionConfiguration
+        encryptionType: "AES256", // required
+        // kmsKey: "STRING_VALUE",
+      },
+    };
+    console.log("-->>>>>Checking/Creating ECR repository...");
     try {
-        var ecrResponse = null;
-        var taskDefResponse = null;
-        var serviceResponse = null;
-        var loadBalancerResponse = null;
+      ecrResponse = await ecrClient.send(new CreateRepositoryCommand(ECRinput));
+      console.log(">>>>>>>>ECR repository created");
+    } catch (error) {
+      if (error.name === "RepositoryAlreadyExistsException") {
+        console.log(">>>>>>>>Repository already exists, skipping creation");
+      } else {
+        throw error;
+      }
+    }
+    // Clone GitHub repository
+    console.log(`>>>>>>Cloning repository from ${repoUrl}...`);
+    const P = await execAsync(`git clone ${repoUrl} ${tempDir}`);
+    console.log("P", P);
+    console.log(">>>>>Repository cloned successfully");
 
-        console.log(
-            `Starting deployment for ${DeploymentName}... ${ECRrepositoryName}`
-        );
-        // Create ECR repository
-        const ECRinput = {
-            repositoryName: ECRrepositoryName, // required
-            // tags: [
-            //     // TagList
-            //     {
-            //         // Tag
-            //         Key: "STRING_VALUE", // required
-            //         Value: "STRING_VALUE", // required
-            //     },
-            // ],
-            imageTagMutability: "MUTABLE",
-            imageScanningConfiguration: {
-                // ImageScanningConfiguration
-                scanOnPush: true,
-            },
-            encryptionConfiguration: {
-                // EncryptionConfiguration
-                encryptionType: "AES256", // required
-                // kmsKey: "STRING_VALUE",
-            },
-        };
-        console.log("-->>>>>Checking/Creating ECR repository...");
-        try {
-            ecrResponse = await ecrClient.send(
-                new CreateRepositoryCommand(ECRinput)
-            );
-            console.log(">>>>>>>>ECR repository created");
-        } catch (error) {
-            if (error.name === "RepositoryAlreadyExistsException") {
-                console.log(
-                    ">>>>>>>>Repository already exists, skipping creation"
-                );
-            } else {
-                throw error;
-            }
-        }
-        // Clone GitHub repository
-        console.log(`>>>>>>Cloning repository from ${repoUrl}...`);
-        const P = await execAsync(`git clone ${repoUrl} ${tempDir}`);
-        console.log("P", P);
-        console.log(">>>>>Repository cloned successfully");
-
-        // Check if Dockerfile exists, if not use a template
-        if (!fs.existsSync(dockerFilePath)) {
-            console.log("Dockerfile not found, creating template...");
-            fs.writeFileSync(
-                dockerFilePath,
-                `
+    // Check if Dockerfile exists, if not use a template
+    if (!fs.existsSync(dockerFilePath)) {
+      console.log("Dockerfile not found, creating template...");
+      fs.writeFileSync(
+        dockerFilePath,
+        `
                 FROM node:lts
                 WORKDIR /app
                 COPY package*.json ./ 
@@ -261,282 +288,276 @@ app.post("/deploy-repo", async (req, res) => {
                 EXPOSE ${port}
                 CMD ["npm", "run","dev"]
             `
-            );
-            console.log("Dockerfile template created");
-        }
-
-        // Build Docker image
-        console.log("Building Docker image...");
-        const pp = await execAsync(
-            `docker build -t ${ECRrepositoryName} ${tempDir}`
-        );
-        console.log("pp", pp);
-        console.log("Docker image built successfully");
-
-        // Authenticate and push Docker image to ECR
-        console.log("Getting ECR authentication token...");
-        const authCommand = new GetAuthorizationTokenCommand({});
-        const authResponse = await ecrClient.send(authCommand);
-        const authToken = Buffer.from(
-            authResponse.authorizationData[0].authorizationToken,
-            "base64"
-        )
-            .toString("utf-8")
-            .split(":")[1];
-        const registryUri =
-            authResponse.authorizationData[0].proxyEndpoint.replace(
-                "https://",
-                ""
-            );
-        console.log("ECR authentication successful");
-
-        console.log("Logging into Docker...");
-        await execAsync(`docker login -u AWS -p ${authToken} ${registryUri}`);
-        const remoteImageUri = `${registryUri}/${ECRrepositoryName}:${imageTag}`;
-
-        console.log("Tagging Docker image...");
-        console.log(
-            `-----> docker tag ${ECRrepositoryName}:${imageTag} ${remoteImageUri}`
-        );
-        await execAsync(
-            `docker tag ${ECRrepositoryName}:${imageTag} ${remoteImageUri}`
-        );
-
-        console.log("Pushing image to ECR...");
-        console.log(`-----> docker push ${remoteImageUri}`);
-        await execAsync(`docker push ${remoteImageUri}`);
-        console.log("Image pushed to ECR successfully");
-
-        // Register Task Definition
-        console.log("Registering ECS task definition...");
-
-        const ECStaskinput = {
-            // RegisterTaskDefinitionRequest
-            family: `${DeploymentName}-taskdef`, // required
-            taskRoleArn: process.env.TASK_ROLE_ARN,
-            executionRoleArn: process.env.TASK_ROLE_ARN,
-            networkMode: "awsvpc",
-            containerDefinitions: [
-                // ContainerDefinitions // required
-                {
-                    // ContainerDefinition
-                    name: `${DeploymentName}-container`, // required
-                    image: remoteImageUri, // required
-                    cpu: 0,
-
-                    portMappings: [
-                        // PortMappingList
-                        {
-                            // PortMapping
-                            name: `${DeploymentName}-container-port`, // required
-                            containerPort: port, // required
-                            hostPort: port,
-                            protocol: "tcp",
-                            appProtocol: "http",
-                        },
-                    ],
-                    essential: true,
-
-                    environment: [
-                        // EnvironmentVariables
-                        {
-                            // KeyValuePair
-                            name: "PORT",
-                            value: `${port}`,
-                        },
-                    ],
-
-                    logConfiguration: {
-                        logDriver: "awslogs", // required
-                        options: {
-                            "awslogs-group": `/ecs/${DeploymentName}-logs`,
-                            mode: "non-blocking",
-                            "awslogs-create-group": "true",
-                            "max-buffer-size": "25m",
-                            "awslogs-region": "ap-south-1",
-                            "awslogs-stream-prefix": "ecs",
-                        },
-                    },
-                },
-            ],
-
-            requiresCompatibilities: [
-                // CompatibilityList
-                "FARGATE",
-            ],
-            cpu: "512",
-            memory: "2048",
-
-            runtimePlatform: {
-                cpuArchitecture: "X86_64",
-                operatingSystemFamily: "LINUX",
-            },
-        };
-        console.log(JSON.stringify(ECStaskinput, null, 2));
-        taskDefResponse = await ecsClient.send(
-            new RegisterTaskDefinitionCommand(ECStaskinput)
-        );
-        console.log(taskDefResponse);
-        console.log("Task definition registered");
-
-        console.log(JSON.stringify(taskDefResponse, null, 2));
-
-        // Create Load Balancer
-        console.log("Creating load balancer...");
-
-        const laodBalancerinput = {
-            Name: `${DeploymentName}-lb`,
-            Subnets: process.env.SUBNET_IDS.split(","),
-            SecurityGroups: [process.env.SECURITY_GROUP_ID],
-            Scheme: "internet-facing",
-            Type: "application",
-        };
-        const loadBalancercomman = new CreateLoadBalancerCommand(
-            laodBalancerinput
-        );
-
-        loadBalancerResponse = await elbClient.send(loadBalancercomman);
-        console.log("Load balancer created");
-
-        // create task group
-        console.log("Creating target group...");
-
-        const targetGroupinput = {
-            Name: `${DeploymentName}-tg`,
-            Protocol: "HTTP",
-            Port: 80,
-            VpcId: process.env.VPC_ID,
-            TargetType: "ip",
-        };
-
-        const targetGroupCommand = new CreateTargetGroupCommand(
-            targetGroupinput
-        );
-        const targetGroupResponse = await elbClient.send(targetGroupCommand);
-
-        console.log("output", targetGroupResponse);
-        console.log("Target group created");
-
-        // Create Listener
-
-        console.log("Creating listener...");
-
-        const listenerinput = {
-            LoadBalancerArn:
-                loadBalancerResponse.LoadBalancers[0].LoadBalancerArn,
-            Protocol: "HTTP",
-            Port: 80,
-            DefaultActions: [
-                {
-                    Type: "forward",
-                    TargetGroupArn:
-                        targetGroupResponse.TargetGroups[0].TargetGroupArn,
-                },
-            ],
-        };
-        const listernercommand = new CreateListenerCommand(listenerinput);
-
-        const listenerresponse = await elbClient.send(listernercommand);
-
-        // console.log("Listener---", listenerresponse);
-        console.log("Listener created");
-
-        // Create ECS Service
-        console.log("Creating ECS service...");
-        const ECSServiceinput = {
-            // CreateServiceRequest
-            cluster: process.env.ECS_CLUSTER_NAME,
-            serviceName: `${DeploymentName}-service`, // required
-            taskDefinition: taskDefResponse.taskDefinition.taskDefinitionArn, // something i decice
-            loadBalancers: [
-                {
-                    targetGroupArn:
-                        targetGroupResponse.TargetGroups[0].TargetGroupArn, // required
-                    // loadBalancerName: `${DeploymentName}-lb`, // required
-                    containerName: `${DeploymentName}-container`, // Must match the container name in your task definition
-                    containerPort: port, // Ensure this is a number
-                },
-            ],
-
-            desiredCount: 2,
-            // clientToken: "STRING_VALUE",
-
-            capacityProviderStrategy: [
-                // confused
-                // CapacityProviderStrategy
-                {
-                    // CapacityProviderStrategyItem
-                    capacityProvider: "FARGATE", // required
-                    weight: 1,
-                    base: 0,
-                },
-            ],
-            platformVersion: "LATEST",
-            // role: "STRING_VALUE",
-            deploymentConfiguration: {
-                // DeploymentConfiguration
-                deploymentCircuitBreaker: {
-                    // DeploymentCircuitBreaker
-                    enable: true, // required
-                    rollback: true, // required
-                },
-                maximumPercent: 200,
-                minimumHealthyPercent: 100,
-                alarms: {
-                    rollback: false, // required
-                    enable: false, // required
-                },
-            },
-
-            networkConfiguration: {
-                // NetworkConfiguration
-                awsvpcConfiguration: {
-                    // AwsVpcConfiguration
-                    subnets: process.env.SUBNET_IDS.split(","),
-                    securityGroups: [process.env.SECURITY_GROUP_ID],
-                    assignPublicIp: "ENABLED",
-                },
-            },
-            // healthCheckGracePeriodSeconds: Number("int"),
-            deploymentController: {
-                // DeploymentController
-                type: "ECS", // required
-            },
-        };
-
-        console.log("---------------------------<>---------------------------");
-
-        // console.log(JSON.stringify(ECSServiceinput, null, 2));
-        serviceResponse = await ecsClient.send(
-            new CreateServiceCommand(ECSServiceinput)
-        );
-        console.log("ECS service created");
-
-        console.log("Deployment completed successfully!");
-        res.json({
-            success: true,
-            ECRrepository: ecrResponse,
-            taskDefinition: taskDefResponse,
-            service: serviceResponse,
-            loadBalancer: loadBalancerResponse,
-            targetGroup: targetGroupResponse.TargetGroups[0].TargetGroupArn,
-        });
-    } catch (error) {
-        console.error("Deployment failed:", error);
-        res.status(500).json({
-            success: false,
-            error: error.message,
-        });
-    } finally {
-        console.log("Cleaning up temporary files...");
-        await execAsync(`rm -rf ${tempDir}`);
-        console.log("Cleanup completed");
+      );
+      console.log("Dockerfile template created");
     }
+
+    // Build Docker image
+    console.log("Building Docker image...");
+    const pp = await execAsync(
+      `docker build -t ${ECRrepositoryName} ${tempDir}`
+    );
+    console.log("pp", pp);
+    console.log("Docker image built successfully");
+
+    // Authenticate and push Docker image to ECR
+    console.log("Getting ECR authentication token...");
+    const authCommand = new GetAuthorizationTokenCommand({});
+    const authResponse = await ecrClient.send(authCommand);
+    const authToken = Buffer.from(
+      authResponse.authorizationData[0].authorizationToken,
+      "base64"
+    )
+      .toString("utf-8")
+      .split(":")[1];
+    const registryUri = authResponse.authorizationData[0].proxyEndpoint.replace(
+      "https://",
+      ""
+    );
+    console.log("ECR authentication successful");
+
+    console.log("Logging into Docker...");
+    await execAsync(`docker login -u AWS -p ${authToken} ${registryUri}`);
+    const remoteImageUri = `${registryUri}/${ECRrepositoryName}:${imageTag}`;
+
+    console.log("Tagging Docker image...");
+    console.log(
+      `-----> docker tag ${ECRrepositoryName}:${imageTag} ${remoteImageUri}`
+    );
+    await execAsync(
+      `docker tag ${ECRrepositoryName}:${imageTag} ${remoteImageUri}`
+    );
+
+    console.log("Pushing image to ECR...");
+    console.log(`-----> docker push ${remoteImageUri}`);
+    await execAsync(`docker push ${remoteImageUri}`);
+    console.log("Image pushed to ECR successfully");
+
+    // Register Task Definition
+    console.log("Registering ECS task definition...");
+
+    const ECStaskinput = {
+      // RegisterTaskDefinitionRequest
+      family: `${DeploymentName}-taskdef`, // required
+      taskRoleArn: process.env.TASK_ROLE_ARN,
+      executionRoleArn: process.env.TASK_ROLE_ARN,
+      networkMode: "awsvpc",
+      containerDefinitions: [
+        // ContainerDefinitions // required
+        {
+          // ContainerDefinition
+          name: `${DeploymentName}-container`, // required
+          image: remoteImageUri, // required
+          cpu: 0,
+
+          portMappings: [
+            // PortMappingList
+            {
+              // PortMapping
+              name: `${DeploymentName}-container-port`, // required
+              containerPort: port, // required
+              hostPort: port,
+              protocol: "tcp",
+              appProtocol: "http",
+            },
+          ],
+          essential: true,
+
+          environment: [
+            // EnvironmentVariables
+            {
+              // KeyValuePair
+              name: "PORT",
+              value: `${port}`,
+            },
+          ],
+
+          logConfiguration: {
+            logDriver: "awslogs", // required
+            options: {
+              "awslogs-group": `/ecs/${DeploymentName}-logs`,
+              mode: "non-blocking",
+              "awslogs-create-group": "true",
+              "max-buffer-size": "25m",
+              "awslogs-region": "ap-south-1",
+              "awslogs-stream-prefix": "ecs",
+            },
+          },
+        },
+      ],
+
+      requiresCompatibilities: [
+        // CompatibilityList
+        "FARGATE",
+      ],
+      cpu: "512",
+      memory: "2048",
+
+      runtimePlatform: {
+        cpuArchitecture: "X86_64",
+        operatingSystemFamily: "LINUX",
+      },
+    };
+    console.log(JSON.stringify(ECStaskinput, null, 2));
+    taskDefResponse = await ecsClient.send(
+      new RegisterTaskDefinitionCommand(ECStaskinput)
+    );
+    console.log(taskDefResponse);
+    console.log("Task definition registered");
+
+    console.log(JSON.stringify(taskDefResponse, null, 2));
+
+    // Create Load Balancer
+    console.log("Creating load balancer...");
+
+    const laodBalancerinput = {
+      Name: `${DeploymentName}-lb`,
+      Subnets: process.env.SUBNET_IDS.split(","),
+      SecurityGroups: [process.env.SECURITY_GROUP_ID],
+      Scheme: "internet-facing",
+      Type: "application",
+    };
+    const loadBalancercomman = new CreateLoadBalancerCommand(laodBalancerinput);
+
+    loadBalancerResponse = await elbClient.send(loadBalancercomman);
+    console.log("Load balancer created");
+
+    // create task group
+    console.log("Creating target group...");
+
+    const targetGroupinput = {
+      Name: `${DeploymentName}-tg`,
+      Protocol: "HTTP",
+      Port: 80,
+      VpcId: process.env.VPC_ID,
+      TargetType: "ip",
+    };
+
+    const targetGroupCommand = new CreateTargetGroupCommand(targetGroupinput);
+    const targetGroupResponse = await elbClient.send(targetGroupCommand);
+
+    console.log("output", targetGroupResponse);
+    console.log("Target group created");
+
+    // Create Listener
+
+    console.log("Creating listener...");
+
+    const listenerinput = {
+      LoadBalancerArn: loadBalancerResponse.LoadBalancers[0].LoadBalancerArn,
+      Protocol: "HTTP",
+      Port: 80,
+      DefaultActions: [
+        {
+          Type: "forward",
+          TargetGroupArn: targetGroupResponse.TargetGroups[0].TargetGroupArn,
+        },
+      ],
+    };
+    const listernercommand = new CreateListenerCommand(listenerinput);
+
+    const listenerresponse = await elbClient.send(listernercommand);
+
+    // console.log("Listener---", listenerresponse);
+    console.log("Listener created");
+
+    // Create ECS Service
+    console.log("Creating ECS service...");
+    const ECSServiceinput = {
+      // CreateServiceRequest
+      cluster: process.env.ECS_CLUSTER_NAME,
+      serviceName: `${DeploymentName}-service`, // required
+      taskDefinition: taskDefResponse.taskDefinition.taskDefinitionArn, // something i decice
+      loadBalancers: [
+        {
+          targetGroupArn: targetGroupResponse.TargetGroups[0].TargetGroupArn, // required
+          // loadBalancerName: `${DeploymentName}-lb`, // required
+          containerName: `${DeploymentName}-container`, // Must match the container name in your task definition
+          containerPort: port, // Ensure this is a number
+        },
+      ],
+
+      desiredCount: 2,
+      // clientToken: "STRING_VALUE",
+
+      capacityProviderStrategy: [
+        // confused
+        // CapacityProviderStrategy
+        {
+          // CapacityProviderStrategyItem
+          capacityProvider: "FARGATE", // required
+          weight: 1,
+          base: 0,
+        },
+      ],
+      platformVersion: "LATEST",
+      // role: "STRING_VALUE",
+      deploymentConfiguration: {
+        // DeploymentConfiguration
+        deploymentCircuitBreaker: {
+          // DeploymentCircuitBreaker
+          enable: true, // required
+          rollback: true, // required
+        },
+        maximumPercent: 200,
+        minimumHealthyPercent: 100,
+        alarms: {
+          rollback: false, // required
+          enable: false, // required
+        },
+      },
+
+      networkConfiguration: {
+        // NetworkConfiguration
+        awsvpcConfiguration: {
+          // AwsVpcConfiguration
+          subnets: process.env.SUBNET_IDS.split(","),
+          securityGroups: [process.env.SECURITY_GROUP_ID],
+          assignPublicIp: "ENABLED",
+        },
+      },
+      // healthCheckGracePeriodSeconds: Number("int"),
+      deploymentController: {
+        // DeploymentController
+        type: "ECS", // required
+      },
+    };
+
+    console.log("---------------------------<>---------------------------");
+
+    // console.log(JSON.stringify(ECSServiceinput, null, 2));
+    serviceResponse = await ecsClient.send(
+      new CreateServiceCommand(ECSServiceinput)
+    );
+    console.log("ECS service created");
+
+    console.log("Deployment completed successfully!");
+
+    /// proxy  "aws" niit , pdeploemtn id
+    res.json({
+      success: true,
+      ECRrepository: ecrResponse,
+      taskDefinition: taskDefResponse,
+      service: serviceResponse,
+      loadBalancer: loadBalancerResponse,
+      targetGroup: targetGroupResponse.TargetGroups[0].TargetGroupArn,
+    });
+  } catch (error) {
+    console.error("Deployment failed:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  } finally {
+    console.log("Cleaning up temporary files...");
+    await execAsync(`rm -rf ${tempDir}`);
+    console.log("Cleanup completed");
+  }
 });
 
 // listening at
 app.listen(port, () => {
-    console.log(`Server listening on port http://localhost:${port} , `);
+  console.log(`Server listening on port http://localhost:${port} , `);
 });
 
 // app.get("/put-image", async (req, res) => {
