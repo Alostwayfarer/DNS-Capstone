@@ -28,14 +28,15 @@ pipeline {
                     }
                 }
             
-            // when {
-            //     branch 'frontend'
-            // }
-            //     steps {
-            //         script {
-            //             dockerimage = docker.build( app_frontend_Registry, "./frontend")
-            //         }
-            //     }
+            when {
+                branch 'frontend'
+            }
+                steps {
+                    script {
+                        dockerimage = docker.build( app_frontend_Registry, "./front-deadend")
+                        echo "build complete for frontend"
+                    }
+                }
             }
         }}
 //         }
