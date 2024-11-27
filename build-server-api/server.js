@@ -293,7 +293,7 @@ app.post("/deploy-repo", async (req, res) => {
                 "FARGATE",
             ],
             cpu: "512",
-            memory: "2048",
+            memory: "1024",
 
             runtimePlatform: {
                 cpuArchitecture: "X86_64",
