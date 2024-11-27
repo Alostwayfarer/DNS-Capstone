@@ -12,19 +12,17 @@ pipeline {
     
     stages {
         stage('fetch code') {
-                steps{
-                       git url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
-                }
+             checkout scm
         }
 
         stage('Build') {
-            when branch 'client-api'{
+            when {branch 'client-api'}
                 steps {
                     script {
                         dockerimage = docker.build( app_client_Registry + "${BRANCH_NAME}", "./client-api")
                     }
                 }
-            }
+            
             when branch 'frontend'{
                 steps {
                     script {
@@ -35,8 +33,8 @@ pipeline {
 
         }
         stage('Push') {
-                steps {
             when branch 'client-api'{
+                steps {
                     script {
                         docker.withRegistry(RegistryURL, registryCredential) {
                             dockerimage.push("${BRANCH_NAME}")
