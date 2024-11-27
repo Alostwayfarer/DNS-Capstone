@@ -17,7 +17,7 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build client-api') {
             when {
                 branch 'client-api'
             }
@@ -29,11 +29,12 @@ pipeline {
                             dockerimage.push("${BRANCH_NAME}")
                             dockerimage.push('latest')
                         echo "docker push complete for client-api"
-                        
+
                     }
                 }
             }
-            
+        }
+        stage('Build frontend') {
             when {
                 branch 'frontend'
             }
@@ -50,4 +51,5 @@ pipeline {
                     }
                 }
             }
-        }}
+        }
+    }
