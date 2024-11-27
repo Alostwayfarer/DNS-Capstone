@@ -35,8 +35,8 @@ pipeline {
 
         }
         stage('Push') {
-            when branch 'client-api'{
                 steps {
+            when branch 'client-api'{
                     script {
                         docker.withRegistry(RegistryURL, registryCredential) {
                             dockerimage.push("${BRANCH_NAME}")
