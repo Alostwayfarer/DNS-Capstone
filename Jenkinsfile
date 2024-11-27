@@ -25,8 +25,14 @@ pipeline {
                     script {
                         dockerimage = docker.build( app_client_Registry, "./client-api")
                         echo "build complete for client"
+                        docker.withRegistry(RegistryURL, registryCredential) {
+                            dockerimage.push("${BRANCH_NAME}")
+                            dockerimage.push('latest')
+                        echo "docker push complete for client-api"
+                        
                     }
                 }
+            }
             
             when {
                 branch 'frontend'
@@ -35,33 +41,13 @@ pipeline {
                     script {
                         dockerimage = docker.build( app_frontend_Registry, "./front-deadend")
                         echo "build complete for frontend"
+                        docker.withRegistry(RegistryURL, registryCredential) {
+                            dockerimage.push("${BRANCH_NAME}")
+                            dockerimage.push('latest')
+                        echo "docker push complete for frontend"
+
+                        }
                     }
                 }
             }
         }}
-//         }
-//         stage('Push') {
-//             when branch 'client-api'{
-//                 steps {
-//                     script {
-//                         docker.withRegistry(RegistryURL, registryCredential) {
-//                             dockerimage.push("${BRANCH_NAME}")
-//                             dockerimage.push('latest')
-//                         }
-//                     }
-//                 }
-//             }
-//             when branch 'frontend'{
-//                 steps {
-//                     script {
-//                         docker.withRegistry(RegistryURL, registryCredential) {
-//                             dockerimage.push("${BRANCH_NAME}")
-//                             dockerimage.push('latest')
-
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
