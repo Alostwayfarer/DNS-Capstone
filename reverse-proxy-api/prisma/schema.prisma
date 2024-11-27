@@ -1,0 +1,39 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id     String       @id @default(uuid())
+  name        String
+  deployments Deployment[]
+}
+
+model Deployment {
+  deployment_id   String         @id @default(uuid())
+  github_link     String
+  subdomain       String         @unique @map("AWS_link")
+  deployment_type DeploymentType
+  user            User           @relation(fields: [userId], references: [user_id])
+  userId          String
+  Proxy           Proxy[]
+}
+
+model Proxy {
+  proxy_id      String     @id @default(uuid())
+  deployment_id String
+  depolyment    Deployment @relation(fields: [deployment_id], references: [deployment_id])
+  subdomain     String     @unique
+  AWS_link      String
+}
+
+enum DeploymentType {
+  FRONTEND
+  BACKEND
+  PYTHON
+}
