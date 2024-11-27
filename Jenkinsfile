@@ -11,8 +11,10 @@ pipeline {
     }
     
     stages {
-        stage('fetch code') {
-             checkout scm
+        stage('Initialize') {
+            steps {
+                echo "Building the app"
+            }
         }
 
         stage('Build') {
