@@ -1,0 +1,143 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'us-east-1'
+        DOCKER_REGISTRY = 'your-docker-registry-url'
+        NODE_ENV = 'production'
+        SONARQUBE_SERVER = 'sq1-server'
+        SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/your/slack/webhook' // Add actual Slack webhook
+    }
+    
+    stages {
+        stage('Initialize') {
+            steps {
+                echo 'Initializing pipeline...'
+                script {
+                    // Placeholder for dynamic ECR repo setup based on user GitHub links
+                    env.ECR_REPO_NAME = 'dynamic-ecr-repo-based-on-user-link'
+                }
+            }
+        }
+
+        stage('Security Check') {
+            parallel {
+                stage('Run OWASP ZAP') {
+                    steps {
+                        echo 'Running OWASP ZAP for security scans...'
+                        // Assuming OWASP ZAP is pre-configured
+                        sh 'zap-cli quick-scan --self-contained --target http://localhost:9001'
+                    }
+                }
+                stage('Run SonarQube Analysis') {
+                    steps {
+                        withSonarQubeEnv('sq-jenkins') {
+                            sh 'sonar-scanner -Dsonar.projectKey=DNS-Project -Dsonar.sources=. -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    echo 'Building frontend...'
+                    sh 'npm install && npm run build'
+                    echo 'Frontend build complete!'
+                }
+            }
+        }
+        
+        stage('Build Backend') {
+            steps {
+                dir('backend') {
+                    echo 'Building backend...'
+                    sh 'npm install && npm run build'
+                    echo 'Backend build complete!'
+                }
+            }
+        }
+        
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    echo 'Building Docker images...'
+                    sh """
+                        docker build -t $DOCKER_REGISTRY/$ECR_REPO_NAME-frontend:latest ./frontend
+                        docker build -t $DOCKER_REGISTRY/$ECR_REPO_NAME-backend:latest ./backend
+                    """
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                dir('backend') { // Assuming tests are in backend
+                    sh 'npm test'
+                }
+            }
+        }
+        
+        stage('Push to ECR') {
+            steps {
+                script {
+                    sh """
+                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $DOCKER_REGISTRY
+                        docker tag $DOCKER_REGISTRY/$ECR_REPO_NAME-frontend:latest $DOCKER_REGISTRY/$ECR_REPO_NAME-frontend:latest
+                        docker push $DOCKER_REGISTRY/$ECR_REPO_NAME-frontend:latest
+                        docker tag $DOCKER_REGISTRY/$ECR_REPO_NAME-backend:latest $DOCKER_REGISTRY/$ECR_REPO_NAME-backend:latest
+                        docker push $DOCKER_REGISTRY/$ECR_REPO_NAME-backend:latest
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy Frontend to Vercel') {
+            steps {
+                dir('frontend') {
+                    echo 'Deploying frontend to Vercel...'
+                    sh 'vercel --prod'
+                }
+            }
+        }
+        
+        stage('Deploy Backend to ECS') {
+            steps {
+                script {
+                    echo 'Deploying backend to ECS...'
+                    sh """
+                        aws ecs update-service --cluster devcluster \
+                                               --service devcluster-backend \
+                                               --force-new-deployment \
+                                               --region $AWS_REGION
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline executed successfully!'
+            script {
+                sh """
+                    curl -X POST -H 'Content-type: application/json' \
+                         --data '{"text":"Build succeeded!"}' \
+                         $SLACK_WEBHOOK_URL
+                """
+            }
+        }
+        failure {
+            echo 'Pipeline failed!'
+            script {
+                sh """
+                    curl -X POST -H 'Content-type: application/json' \
+                         --data '{"text":"Build failed!"}' \
+                         $SLACK_WEBHOOK_URL
+                """
+            }
+        }
+    }
+}
