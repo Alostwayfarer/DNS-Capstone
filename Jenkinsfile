@@ -16,46 +16,48 @@ pipeline {
                 echo "Building the app"
             }
         }
-
-        stage('Build') {
-            when {branch 'client-api'}
-                steps {
-                    script {
-                        dockerimage = docker.build( app_client_Registry + "${BRANCH_NAME}", "./client-api")
-                    }
-                }
-            
-            when branch 'frontend'{
-                steps {
-                    script {
-                        dockerimage = docker.build( app_frontend_Registry + "${BRANCH_NAME}", "./frontend")
-                    }
-                }
-            }
-
-        }
-        stage('Push') {
-            when branch 'client-api'{
-                steps {
-                    script {
-                        docker.withRegistry(RegistryURL, registryCredential) {
-                            dockerimage.push("${BRANCH_NAME}")
-                            dockerimage.push('latest')
-                        }
-                    }
-                }
-            }
-            when branch 'frontend'{
-                steps {
-                    script {
-                        docker.withRegistry(RegistryURL, registryCredential) {
-                            dockerimage.push("${BRANCH_NAME}")
-                            dockerimage.push('latest')
-
-                        }
-                    }
-                }
-            }
-        }
     }
 }
+
+//         stage('Build') {
+//             when {branch 'client-api'}
+//                 steps {
+//                     script {
+//                         dockerimage = docker.build( app_client_Registry + "${BRANCH_NAME}", "./client-api")
+//                     }
+//                 }
+            
+//             when branch 'frontend'{
+//                 steps {
+//                     script {
+//                         dockerimage = docker.build( app_frontend_Registry + "${BRANCH_NAME}", "./frontend")
+//                     }
+//                 }
+//             }
+
+//         }
+//         stage('Push') {
+//             when branch 'client-api'{
+//                 steps {
+//                     script {
+//                         docker.withRegistry(RegistryURL, registryCredential) {
+//                             dockerimage.push("${BRANCH_NAME}")
+//                             dockerimage.push('latest')
+//                         }
+//                     }
+//                 }
+//             }
+//             when branch 'frontend'{
+//                 steps {
+//                     script {
+//                         docker.withRegistry(RegistryURL, registryCredential) {
+//                             dockerimage.push("${BRANCH_NAME}")
+//                             dockerimage.push('latest')
+
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
