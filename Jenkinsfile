@@ -14,9 +14,10 @@ pipeline {
         stage('Initialize') {
             steps {
                 echo "Building the app"
-            }
+            
         }
-
+        }
+        }
         stage('Build client-api') {
             when {
                 branch 'client-api'
@@ -52,4 +53,4 @@ pipeline {
                 }
             }
         }
-    }
+    
