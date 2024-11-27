@@ -31,7 +31,7 @@ app.use(async (req, res) => {
     if (parts[0] === "dns-bhkv" || parts[0] === "dns-1314295316.ap-south-1") {
         return res.json({
             error: "give sub domain",
-            example: "api.localhost:8000",
+            example: `api.${hostname}`,
         });
     }
 
