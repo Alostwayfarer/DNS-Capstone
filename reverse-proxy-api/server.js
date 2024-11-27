@@ -2,7 +2,7 @@ const express = require("express");
 const httpproxy = require("http-proxy");
 const app = express();
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8000;
 const proxy = httpproxy.createProxy();
 
 const http = require("http");

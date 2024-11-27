@@ -15,9 +15,12 @@
     "@aws-sdk/client-ecs": "^3.686.0",
     "@aws-sdk/client-elastic-load-balancing": "^3.686.0",
     "@aws-sdk/client-elastic-load-balancing-v2": "^3.693.0",
+    "@prisma/client": "^5.22.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
-    "nodemon": "^3.1.7"
+    "faker": "^6.6.6",
+    "nodemon": "^3.1.7",
+    "prisma": "^5.22.0"
   }
 }
