@@ -18,14 +18,14 @@ pipeline {
         }
 
         stage('Build') {
-            when branch: 'client-api'{
+            when branch 'client-api'{
                 steps {
                     script {
                         dockerimage = docker.build( app_client_Registry + "${BRANCH_NAME}", "./client-api")
                     }
                 }
             }
-            when branch: 'frontend'{
+            when branch 'frontend'{
                 steps {
                     script {
                         dockerimage = docker.build( app_frontend_Registry + "${BRANCH_NAME}", "./frontend")
@@ -35,7 +35,7 @@ pipeline {
 
         }
         stage('Push') {
-            when branch: 'client-api'{
+            when branch 'client-api'{
                 steps {
                     script {
                         docker.withRegistry(RegistryURL, registryCredential) {
@@ -45,7 +45,7 @@ pipeline {
                     }
                 }
             }
-            when branch: 'frontend'{
+            when branch 'frontend'{
                 steps {
                     script {
                         docker.withRegistry(RegistryURL, registryCredential) {
