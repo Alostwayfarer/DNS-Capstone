@@ -18,7 +18,7 @@ pipeline {
                         -Dsonar.projectKey=DNS-Capstone \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://3.110.85.15:9000 \
-                        -Dsonar.login=dns-snqb
+                        -Dsonar.login=sqa_9b27bb1996dc8c4467c2d24f61b083d14489a62c
                         """
                     }
                 }
