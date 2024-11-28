@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Fetch Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
+            }
+        }
+        
+        stage('SonarQube Scan') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner' 
+                    withSonarQubeEnv('Sonar-Qb-Server') { 
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=DNS-Capstone \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://3.110.85.15:9000 \
+                        -Dsonar.login=sqa_9b27bb1996dc8c4467c2d24f61b083d14489a62c
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
