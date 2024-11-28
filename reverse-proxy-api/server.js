@@ -45,7 +45,8 @@ app.use(async (req, res) => {
         });
 
         if (proxyurl) {
-            const redirectTo = proxyurl.AWS_link;
+            const redirectTo = "http://" + proxyurl.AWS_link;
+            console.log(redirectTo);
             const isHealthy = await checkHealth(redirectTo);
             if (!isHealthy) {
                 return res

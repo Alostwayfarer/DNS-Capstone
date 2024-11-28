@@ -1,9 +1,9 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const cors = require("cors");
 const { exec } = require("child_process");
 const { promisify } = require("util");
+const cors = require("cors");
 const execAsync = promisify(exec);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
@@ -11,7 +11,10 @@ const prisma = new PrismaClient();
 // ///////////////////AWS
 const {
     ECRClient,
+    ListImagesCommand,
     DescribeRegistryCommand,
+    DescribeRepositoriesCommand,
+    CreateRepositoryCommand,
     GetAuthorizationTokenCommand,
 } = require("@aws-sdk/client-ecr");
 
@@ -109,178 +112,104 @@ app.get("/health", async (req, res) => {
     }
 });
 
+app.get("/images", async (req, res) => {
+    try {
+        const input = {};
+        const command = new DescribeRepositoriesCommand(input);
+        const response = await ecrClient.send(command);
+        console.log("res", response);
+        const { repositories } = await ecrClient.send(
+            new DescribeRepositoriesCommand({})
+        );
+        const imagePromises = repositories.map(async (repo) => {
+            const images = await ecrClient.send(
+                new ListImagesCommand({
+                    repositoryName: repo.repositoryName,
+                    filter: { tagStatus: "TAGGED" },
+                })
+            );
+            return { repository: repo.repositoryName, images: images.imageIds };
+        });
+
+        const repositoryImages = await Promise.all(imagePromises);
+        res.status(200).json({
+            one: repositories,
+            repositories: repositoryImages,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post("/deploy-repo", async (req, res) => {
-    const { repoUrl, DeploymentName, buildType, userId, CMD, port } = req.body;
+    const { repoUrl, DeploymentName, port } = req.body;
     const tempDir = path.join(__dirname, "temp-build", DeploymentName);
-    // const dockerFilePath = path.join(tempDir, "Dockerfile");
+    const dockerFilePath = path.join(tempDir, "Dockerfile");
     const ECRrepositoryName = `${DeploymentName}-repo`;
     const imageTag = "latest";
-    let deleteimg;
     try {
         var ecrResponse = null;
         var taskDefResponse = null;
         var serviceResponse = null;
         var loadBalancerResponse = null;
+
         console.log(`Starting deployment for ${DeploymentName}`);
+        // Create ECR repository
+        // const ECRinput = {
+        //     repositoryName: ECRrepositoryName, // required
+
+        //     imageTagMutability: "MUTABLE",
+        //     imageScanningConfiguration: {
+        //         // ImageScanningConfiguration
+        //         scanOnPush: true,
+        //     },
+        //     encryptionConfiguration: {
+        //         // EncryptionConfiguration
+        //         encryptionType: "AES256", // required
+        //         // kmsKey: "STRING_VALUE",
+        //     },
+        // };
+        // console.log("-->>>>>Checking/Creating ECR repository...");
+        // try {
+        //     ecrResponse = await ecrClient.send(
+        //         new CreateRepositoryCommand(ECRinput)
+        //     );
+        //     console.log(">>>>>>>>ECR repository created");
+        // } catch (error) {
+        //     if (error.name === "RepositoryAlreadyExistsException") {
+        //         console.log(
+        //             ">>>>>>>>Repository already exists, skipping creation"
+        //         );
+        //     } else {
+        //         throw error;
+        //     }
+        // }
+
         ecrResponse = await createECRRepository(ECRrepositoryName);
-        await cloneRepository(repoUrl, tempDir);
-        // sfsdfsd
+        // Clone GitHub repository
+        console.log(`>>>>>>Cloning repository from ${repoUrl}...`);
+        const P = await execAsync(`git clone ${repoUrl} ${tempDir}`);
+        console.log("P", P);
+        console.log(">>>>>Repository cloned successfully");
 
-        let dockerFileName;
-        let defaultPort;
-        let defaultCMD;
-        switch (buildType.toUpperCase()) {
-            case "FRONTEND":
-                dockerFileName = "Dockerfile";
-                defaultPort = 80;
-                defaultCMD = ["npm", "run", "dev"];
-                break;
-            case "BACKEND":
-                dockerFileName = "Dockerfile";
-                defaultPort = 3000;
-                defaultCMD = ["npm", "run", "dev"];
-                break;
-            case "PYTHON":
-                dockerFileName = "Dockerfile";
-                defaultPort = 3000;
-                defaultCMD = ["python", "app.py"];
-                break;
-            default:
-                return res.status(400).json({ error: "Invalid buildType" });
-        }
-
-        console.log("default value=>", dockerFileName, defaultPort, defaultCMD);
-
-        const dockerFilePath = path.join(tempDir, dockerFileName);
-
-        // Create Dockerfile based on buildType if it doesn't exist
+        // Check if Dockerfile exists, if not use a template
         if (!fs.existsSync(dockerFilePath)) {
             console.log("Dockerfile not found, creating template...");
-
-            let dockerContent;
-            let finalCMD = defaultCMD;
-            if (CMD) {
-                finalCMD = CMD.split(" ");
-            }
-
-            if (buildType.toUpperCase() === "FRONTEND") {
-                dockerContent = `
-                    FROM node:lts
-                    WORKDIR /app
-                    COPY package*.json ./
-                    RUN npm install
-                    COPY . .
-                    EXPOSE ${port || defaultPort}
-                    CMD ${JSON.stringify(finalCMD)}
-                `;
-            } else if (buildType.toUpperCase() === "BACKEND") {
-                dockerContent = `
+            fs.writeFileSync(
+                dockerFilePath,
+                `
                 FROM node:lts
                 WORKDIR /app
-                COPY package*.json ./
+                COPY package*.json ./ 
                 RUN npm install
                 COPY . .
-                EXPOSE ${port || defaultPort}
-                CMD ${JSON.stringify(finalCMD)}
-                `;
-            } else if (buildType.toUpperCase() === "PYTHON") {
-                dockerContent = `
-                    FROM python:3.9
-                    WORKDIR /app
-                    COPY requirements.txt ./
-                    RUN pip install --no-cache-dir -r requirements.txt
-                    COPY . .
-                    EXPOSE ${port || defaultPort}
-                    CMD ${JSON.stringify(finalCMD)}
-                `;
-            }
-
-            console.log("dockerContent", dockerContent);
-            fs.writeFileSync(dockerFilePath, dockerContent.trim());
-            console.log(`${dockerFileName} created`);
-        } else {
-            console.log("Dockerfile found");
-            const dockerFileContent = fs.readFileSync(dockerFilePath, "utf-8");
-            console.log("Existing Dockerfile content:\n", dockerFileContent);
+                EXPOSE ${port}
+                CMD ["npm", "run","dev"]
+            `
+            );
+            console.log("Dockerfile template created");
         }
-
-        // // Determine Dockerfile and default port based on buildType
-        // let dockerFileName;
-        // let defaultPort;
-        // switch (buildType.toUpperCase()) {
-        //     case "VITE":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 80;
-        //         break;
-        //     case "NODEJS":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 3000;
-        //         break;
-        //     case "PYTHON":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 3000;
-        //         break;
-        //     default:
-        //         return res.status(400).json({ error: "Invalid buildType" });
-        // }
-
-        // const dockerFilePath = path.join(tempDir, dockerFileName);
-
-        // // Create Dockerfile based on buildType if it doesn't exist
-        // if (!fs.existsSync(dockerFilePath)) {
-        //     let dockerContent;
-        //     if (buildType.toUpperCase() === "VITE") {
-        //         dockerContent = `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["npm", "run", "dev"]
-        //                         `;
-        //     } else if (buildType.toUpperCase() === "NODEJS") {
-        //         dockerContent = `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["node", "server.js"]
-        //                         `;
-        //     } else if (buildType.toUpperCase() === "PYTHON") {
-        //         dockerContent = `
-        //         FROM python:3.9
-        //         WORKDIR /app
-        //         COPY requirements.txt ./
-        //         RUN pip install --no-cache-dir -r requirements.txt
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["python", "app.py"]
-        //         `;
-        //     }
-        //     fs.writeFileSync(dockerFilePath, dockerContent.trim());
-        //     console.log(`${dockerFileName} created`);
-        // }
-
-        // // Check if Dockerfile exists, if not use a template
-        // if (!fs.existsSync(dockerFilePath)) {
-        //     console.log("Dockerfile not found, creating template...");
-        //     fs.writeFileSync(
-        //         dockerFilePath,
-        //         `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port}
-        //         CMD ["npm", "run","dev"]
-        //     `
-        //     );
-        //     console.log("Dockerfile template created");
-        // }
 
         // Build Docker image
         console.log("Building Docker image...");
@@ -310,7 +239,6 @@ app.post("/deploy-repo", async (req, res) => {
         console.log("Logging into Docker...");
         await execAsync(`docker login -u AWS -p ${authToken} ${registryUri}`);
         const remoteImageUri = `${registryUri}/${ECRrepositoryName}:${imageTag}`;
-        deleteimg = remoteImageUri;
 
         console.log("Tagging Docker image...");
         console.log(
@@ -521,7 +449,9 @@ app.post("/deploy-repo", async (req, res) => {
                 type: "ECS", // required
             },
         };
+
         console.log("---------------------------<>---------------------------");
+
         // console.log(JSON.stringify(ECSServiceinput, null, 2));
         serviceResponse = await ecsClient.send(
             new CreateServiceCommand(ECSServiceinput)
@@ -529,46 +459,14 @@ app.post("/deploy-repo", async (req, res) => {
         console.log("ECS service created");
 
         console.log("Deployment completed successfully!");
-        let user;
-        if (userId) {
-            user = await prisma.user.findUnique({ where: { user_id: userId } });
-            if (!user) {
-                return res.status(404).json({ error: "User not found" });
-            }
-        } else {
-            user = await prisma.user.create({
-                data: {
-                    name: "",
-                    // email: DeploymentName,
-                },
-            });
-        }
-
-        const deployment = await prisma.deployment.create({
-            data: {
-                github_link: repoUrl,
-                subdomain: DeploymentName,
-                deployment_type: buildType.toUpperCase(),
-                Status: "DEPLOYED",
-                userId: user.user_id,
-                Proxy: {
-                    create: {
-                        subdomain: DeploymentName,
-                        AWS_link: loadBalancerResponse.LoadBalancers[0].DNSName,
-                    },
-                },
-            },
-        });
 
         /// proxy  "aws" niit , deveoplet id
         res.json({
             success: true,
-            deployment: deployment,
-
-            loadBalancer: loadBalancerResponse.LoadBalancers[0].DNSName,
             ECRrepository: ecrResponse,
             taskDefinition: taskDefResponse,
             service: serviceResponse,
+            loadBalancer: loadBalancerResponse,
             targetGroup: targetGroupResponse.TargetGroups[0].TargetGroupArn,
         });
     } catch (error) {
@@ -580,8 +478,6 @@ app.post("/deploy-repo", async (req, res) => {
     } finally {
         console.log("Cleaning up temporary files...");
         await execAsync(`rm -rf ${tempDir}`);
-        await execAsync(`docker rmi ${ECRrepositoryName}:${imageTag}`);
-        await execAsync(`docker rmi ${deleteimg}`);
         console.log("Cleanup completed");
     }
 });
@@ -590,3 +486,114 @@ app.post("/deploy-repo", async (req, res) => {
 app.listen(port, () => {
     console.log(`Server listening on port http://localhost:${port} , `);
 });
+
+// app.get("/put-image", async (req, res) => {
+//     try {
+//         const localImageName = "alpine";
+//         const imageTag = "latest";
+//         const ECRrepositoryName = "my-app-repo";
+//         const authCommand = new GetAuthorizationTokenCommand({});
+//         const authResponse = await ecrClient.send(authCommand);
+//         // Decode authorization token
+//         const authToken = Buffer.from(
+//             authResponse.authorizationData[0].authorizationToken,
+//             "base64"
+//         )
+//             .toString("utf-8")
+//             .split(":")[1];
+
+//         // console.log(authToken);
+//         const registryUri =
+//             authResponse.authorizationData[0].proxyEndpoint.replace(
+//                 "https://",
+//                 ""
+//             );
+//         console.log(registryUri);
+
+//         console.log("Logging in to ECR...");
+//         await execAsync(`docker login -u AWS -p ${authToken} ${registryUri}`);
+
+//         // Tag the local image
+//         const remoteImageUri = `${registryUri}/${ECRrepositoryName}:${imageTag}`;
+//         console.log(
+//             `Tagging local image ${localImageName} as ${remoteImageUri}...`
+//         );
+//         await execAsync(`docker tag ${localImageName} ${remoteImageUri}`);
+
+//         // Push the image
+//         console.log("Pushing image to ECR...");
+//         await execAsync(`docker push ${remoteImageUri}`);
+
+//         console.log("Image upload completed successfully!");
+//         res.status(200).json({
+//             authres: authResponse,
+//             authToken: authToken,
+//             registryUri: registryUri,
+//         });
+//     } catch (e) {
+//         console.log(e);
+//         res.status(500).json({ error: e });
+//     }
+// });
+
+// app.post("/deploy", async (req, res) => {
+//     try {
+//         // Register Task Definition
+//         const taskDefResponse = await ecsClient.send(
+//             new RegisterTaskDefinitionCommand({
+//                 family: "my-task-family",
+//                 containerDefinitions: [
+//                     {
+//                         name: "my-container",
+//                         image: `${process.env.AWS_ACCOUNT_ID}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/my-repo:latest`,
+//                         memory: 512,
+//                         cpu: 256,
+//                         essential: true,
+//                         portMappings: [
+//                             {
+//                                 containerPort: 80,
+//                                 hostPort: 80,
+//                                 protocol: "tcp",
+//                             },
+//                         ],
+//                     },
+//                 ],
+//                 requiresCompatibilities: ["FARGATE"],
+//                 networkMode: "awsvpc",
+//                 cpu: "256",
+//                 memory: "512",
+//             })
+//         );
+
+//         // Create ECS Service
+//         const serviceResponse = await ecsClient.send(
+//             new CreateServiceCommand({
+//                 cluster: process.env.ECS_CLUSTER_NAME,
+//                 serviceName: "my-service",
+//                 taskDefinition:
+//                     taskDefResponse.taskDefinition.taskDefinitionArn,
+//                 desiredCount: 1,
+//                 launchType: "FARGATE",
+//                 networkConfiguration: {
+//                     awsvpcConfiguration: {
+//                         subnets: [process.env.SUBNET_ID],
+//                         securityGroups: [process.env.SECURITY_GROUP_ID],
+//                         assignPublicIp: "ENABLED",
+//                     },
+//                 },
+//             })
+//         );
+
+//         res.json({
+//             success: true,
+//             taskDefinition: taskDefResponse.taskDefinition.taskDefinitionArn,
+//             service: serviceResponse.service.serviceArn,
+//         });
+//     } catch (error) {
+//         console.error("Deployment failed:", error);
+//         res.status(500).json({
+//             success: false,
+//             error: error.message,
+//         });
+//     }
+// });
