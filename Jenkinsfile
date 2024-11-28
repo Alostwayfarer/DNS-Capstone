@@ -57,7 +57,7 @@ pipeline {
 
             stage('Deploy to ECS'){
                 steps{
-                    sh 'aws ecs update-service --cluster dns-cluster --service dns-service --force-new-deployment'
+                    sh 'aws ecs update-service --cluster DNS --service backend-service --force-new-deployment'
                 }
             }
         }
