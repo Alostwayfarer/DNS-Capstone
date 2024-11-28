@@ -17,8 +17,8 @@ pipeline {
                         ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=DNS-Capstone \
                         -Dsonar.sources=. \
-                        -Dsonar.host.url=http://<your-sonarqube-server>:9000 \
-                        -Dsonar.login=<sonarqube-token>
+                        -Dsonar.host.url=http://3.110.85.15:9000 \
+                        -Dsonar.login=dns-snqb
                         """
                     }
                 }
