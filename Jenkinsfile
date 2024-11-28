@@ -19,14 +19,16 @@ pipeline {
         }
     }
 
-        stage('SonarQube scan'){
-            steps{
-                def scannerHome = tool 'sq-jenkins';
-                withSonarQubeEnv('SonarQube') {
-                    sh "${scannerHome}/bin/sonar-scanner"
+       stage('SonarQube scan') {
+    steps {
+        script {
+            def scannerHome = tool 'sq-jenkins'
+            withSonarQubeEnv('SonarQube') {
+                sh "${scannerHome}/bin/sonar-scanner"
             }
         }
     }
+}
         
         stage('Build client-api') {
             when {
