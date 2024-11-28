@@ -1,6 +1,12 @@
 pipeline {
     agent any
     
+    stages{
+        stage('fetch code') {
+                steps{
+                       git url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
+                }
+        }
         stage('scan'){
         script{
             withSonarQubeEnv(installationName: 'Sonar-Qb-Server'){
@@ -9,3 +15,4 @@ pipeline {
                     }
                 }
             }
+}
