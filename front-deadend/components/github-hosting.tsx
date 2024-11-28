@@ -72,30 +72,25 @@ function useTheme() {
 }
 
 // Login and Create Account Page Component
-function LoginPage({
-    setLoggedIn,
-}: {
-    setLoggedIn: (loggedIn: boolean) => void;
-}) {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [name, setName] = useState("");
-    const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-    const [accounts, setAccounts] = useState([
-        { username: "admin", password: "password", name: "Admin User" },
-    ]);
 
-    const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const account = accounts.find(
-            (acc) => acc.username === username && acc.password === password
-        );
-        if (account) {
-            setLoggedIn(true);
-        } else {
-            alert("Invalid credentials");
-        }
-    };
+function LoginPage({ setLoggedIn, githubLink, setUsername }: { setLoggedIn: (loggedIn: boolean) => void, githubLink: string, setUsername: React.Dispatch<React.SetStateAction<string>> }) {
+  const [username, setUser] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false)
+  const [accounts, setAccounts] = useState([{ username: 'admin', password: 'password', name: 'Admin User' }])
+
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const account = accounts.find(acc => acc.username === username && acc.password === password)
+    if (account) {
+      setLoggedIn(true)
+      setUsername(username) // Set username for the logs and security page
+    } else {
+      alert('Invalid credentials')
+    }
+  }
+
 
     const handleCreateAccount = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -108,136 +103,111 @@ function LoginPage({
         alert("Account created successfully! You can now log in.");
     };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 dark:from-gray-800 dark:to-gray-900">
-            <Card className="w-[350px] shadow-lg">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold text-center">
-                        {isCreatingAccount ? "Create Account" : "Login"}
-                    </CardTitle>
-                    <CardDescription className="text-center">
-                        {isCreatingAccount
-                            ? "Enter your details to create a new account"
-                            : "Enter your credentials to access the dashboard"}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isCreatingAccount ? (
-                        <form
-                            onSubmit={handleCreateAccount}
-                            className="space-y-4"
-                        >
-                            <div className="space-y-2">
-                                <Input
-                                    type="text"
-                                    placeholder="Name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                    className="w-full px-3 py-2 border rounded-md"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Input
-                                    type="text"
-                                    placeholder="Username"
-                                    value={username}
-                                    onChange={(e) =>
-                                        setUsername(e.target.value)
-                                    }
-                                    required
-                                    className="w-full px-3 py-2 border rounded-md"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) =>
-                                        setPassword(e.target.value)
-                                    }
-                                    required
-                                    className="w-full px-3 py-2 border rounded-md"
-                                />
-                            </div>
-                            <Button
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                                Create Account
-                            </Button>
-                        </form>
-                    ) : (
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            <div className="space-y-2">
-                                <Input
-                                    type="text"
-                                    placeholder="Username"
-                                    value={username}
-                                    onChange={(e) =>
-                                        setUsername(e.target.value)
-                                    }
-                                    required
-                                    className="w-full px-3 py-2 border rounded-md"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) =>
-                                        setPassword(e.target.value)
-                                    }
-                                    required
-                                    className="w-full px-3 py-2 border rounded-md"
-                                />
-                            </div>
-                            <Button
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                                Login
-                            </Button>
-                        </form>
-                    )}
-                </CardContent>
-                <CardFooter>
-                    <Button
-                        variant="link"
-                        className="w-full"
-                        onClick={() => {
-                            setIsCreatingAccount(!isCreatingAccount);
-                            setUsername("");
-                            setPassword("");
-                            setName("");
-                        }}
-                    >
-                        {isCreatingAccount
-                            ? "Back to Login"
-                            : "Create an Account"}
-                    </Button>
-                </CardFooter>
-            </Card>
-        </div>
-    );
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100 dark:from-gray-800 dark:to-gray-900">
+      <Card className="w-[350px] shadow-lg">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            {isCreatingAccount ? 'Create Account' : 'Login'}
+          </CardTitle>
+          <CardDescription className="text-center">
+            {isCreatingAccount
+              ? 'Enter your details to create a new account'
+              : `Enter your credentials to access the logs for ${githubLink}`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isCreatingAccount ? (
+            <form onSubmit={handleCreateAccount} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUser(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                Create Account
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUser(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                Login
+              </Button>
+            </form>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button
+            variant="link"
+            className="w-full"
+            onClick={() => {
+              setIsCreatingAccount(!isCreatingAccount)
+              setUser('')
+              setPassword('')
+              setName('')
+            }}
+          >
+            {isCreatingAccount ? 'Back to Login' : 'Create an Account'}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  )
 }
 
 // GitHub Link Submission Page Component
-function GitHubLinkPage({
-    setWebsiteLogs,
-}: {
-    setWebsiteLogs: React.Dispatch<
-        React.SetStateAction<
-            { id: number; message: string; timestamp: string }[]
-        >
-    >;
-}) {
-    const [githubLink, setGithubLink] = useState("");
-    const [isHosting, setIsHosting] = useState(false);
-    const [hostingSteps, setHostingSteps] = useState<string[]>([]);
-    const [error, setError] = useState<string | null>(null);
+function GitHubLinkPage({ setGithubLink, navigateToLogin, setWebsiteLogs }: { setGithubLink: (link: string) => void, navigateToLogin: () => void, setWebsiteLogs: React.Dispatch<React.SetStateAction<{ id: number, message: string, timestamp: string }[]>> }) {
+
+  const [githubLink, setGithubLinkState] = useState('')
+  const [isHosting, setIsHosting] = useState(false)
+  const [hostingSteps, setHostingSteps] = useState<string[]>([])
+  const [error, setError] = useState<string | null>(null)
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -435,11 +405,13 @@ function LogsAndSecurityPage({
 
 // Main App Component
 export function GithubHosting() {
-    const [loggedIn, setLoggedIn] = useState(false);
-    const [websiteLogs, setWebsiteLogs] = useState<
-        { id: number; message: string; timestamp: string }[]
-    >([]);
-    const { theme, toggleTheme } = useTheme();
+
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [websiteLogs, setWebsiteLogs] = useState<{ id: number, message: string, timestamp: string }[]>([])
+  const [githubLink, setGithubLink] = useState('')
+  const [username, setUsername] = useState('')
+  const { theme, toggleTheme } = useTheme()
+
 
     return (
         <Router>
@@ -531,9 +503,33 @@ export function GithubHosting() {
                         </Routes>
                     </div>
                 </div>
-            </div>
-        </Router>
-    );
+
+              </div>
+            </nav>
+          )}
+          
+          <div className="container mx-auto p-4">
+            <Routes>
+              <Route path="/" element={
+                loggedIn ? <Navigate to="/github-link" /> : <LoginPage setLoggedIn={setLoggedIn} githubLink={githubLink} setUsername={setUsername} />
+              } />
+              <Route path="/login" element={
+                loggedIn ? <Navigate to="/github-link" /> : <LoginPage setLoggedIn={setLoggedIn} githubLink={githubLink} setUsername={setUsername} />
+              } />
+              <Route path="/github-link" element={
+                loggedIn ? <GitHubLinkPage setGithubLink={(link: string) => {}} navigateToLogin={() => {}} setWebsiteLogs={setWebsiteLogs} /> : <Navigate to="/login" />
+              } />
+              <Route path="/logs-security" element={
+                loggedIn ? <LogsAndSecurityPage websiteLogs={websiteLogs} /> : <Navigate to="/login" />
+              } />
+              <Route path="*" element={<Navigate to="/login" />} />
+            </Routes>
+          </div>
+        </div>
+      </div>
+    </Router>
+  )
+
 }
 
 // Wrap the main component with ThemeProvider
