@@ -18,18 +18,7 @@ pipeline {
             
         }
     }
-       stage('SonarQube Analysis') {
-    steps {
-        script {
-            def scannerHome = tool 'SonarScanner'
-            withSonarQubeEnv('SonarQube') {
-                sh "${scannerHome}/bin/sonar-scanner"
-            }
-        }
-    }
-}
 
-        
         stage('Build client-api') {
             when {
                 branch 'client-api'
