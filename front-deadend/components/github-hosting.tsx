@@ -46,8 +46,8 @@ function useTheme() {
 }
 
 // Login and Create Account Page Component
-function LoginPage({ setLoggedIn }: { setLoggedIn: (loggedIn: boolean) => void }) {
-  const [username, setUsername] = useState('')
+function LoginPage({ setLoggedIn, githubLink, setUsername }: { setLoggedIn: (loggedIn: boolean) => void, githubLink: string, setUsername: React.Dispatch<React.SetStateAction<string>> }) {
+  const [username, setUser] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
@@ -58,6 +58,7 @@ function LoginPage({ setLoggedIn }: { setLoggedIn: (loggedIn: boolean) => void }
     const account = accounts.find(acc => acc.username === username && acc.password === password)
     if (account) {
       setLoggedIn(true)
+      setUsername(username) // Set username for the logs and security page
     } else {
       alert('Invalid credentials')
     }
@@ -84,7 +85,7 @@ function LoginPage({ setLoggedIn }: { setLoggedIn: (loggedIn: boolean) => void }
           <CardDescription className="text-center">
             {isCreatingAccount
               ? 'Enter your details to create a new account'
-              : 'Enter your credentials to access the dashboard'}
+              : `Enter your credentials to access the logs for ${githubLink}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -105,7 +106,7 @@ function LoginPage({ setLoggedIn }: { setLoggedIn: (loggedIn: boolean) => void }
                   type="text"
                   placeholder="Username"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setUser(e.target.value)}
                   required
                   className="w-full px-3 py-2 border rounded-md"
                 />
@@ -131,7 +132,7 @@ function LoginPage({ setLoggedIn }: { setLoggedIn: (loggedIn: boolean) => void }
                   type="text"
                   placeholder="Username"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setUser(e.target.value)}
                   required
                   className="w-full px-3 py-2 border rounded-md"
                 />
@@ -158,7 +159,7 @@ function LoginPage({ setLoggedIn }: { setLoggedIn: (loggedIn: boolean) => void }
             className="w-full"
             onClick={() => {
               setIsCreatingAccount(!isCreatingAccount)
-              setUsername('')
+              setUser('')
               setPassword('')
               setName('')
             }}
@@ -172,8 +173,9 @@ function LoginPage({ setLoggedIn }: { setLoggedIn: (loggedIn: boolean) => void }
 }
 
 // GitHub Link Submission Page Component
-function GitHubLinkPage({ setWebsiteLogs }: { setWebsiteLogs: React.Dispatch<React.SetStateAction<{ id: number, message: string, timestamp: string }[]>> }) {
-  const [githubLink, setGithubLink] = useState('')
+function GitHubLinkPage({ setGithubLink, navigateToLogin, setWebsiteLogs }: { setGithubLink: (link: string) => void, navigateToLogin: () => void, setWebsiteLogs: React.Dispatch<React.SetStateAction<{ id: number, message: string, timestamp: string }[]>> }) {
+
+  const [githubLink, setGithubLinkState] = useState('')
   const [isHosting, setIsHosting] = useState(false)
   const [hostingSteps, setHostingSteps] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -324,6 +326,8 @@ function LogsAndSecurityPage({ websiteLogs }: { websiteLogs: { id: number, messa
 export function GithubHosting() {
   const [loggedIn, setLoggedIn] = useState(false)
   const [websiteLogs, setWebsiteLogs] = useState<{ id: number, message: string, timestamp: string }[]>([])
+  const [githubLink, setGithubLink] = useState('')
+  const [username, setUsername] = useState('')
   const { theme, toggleTheme } = useTheme()
 
   return (
@@ -352,11 +356,14 @@ export function GithubHosting() {
           
           <div className="container mx-auto p-4">
             <Routes>
+              <Route path="/" element={
+                loggedIn ? <Navigate to="/github-link" /> : <LoginPage setLoggedIn={setLoggedIn} githubLink={githubLink} setUsername={setUsername} />
+              } />
               <Route path="/login" element={
-                loggedIn ? <Navigate to="/github-link" /> : <LoginPage setLoggedIn={setLoggedIn} />
+                loggedIn ? <Navigate to="/github-link" /> : <LoginPage setLoggedIn={setLoggedIn} githubLink={githubLink} setUsername={setUsername} />
               } />
               <Route path="/github-link" element={
-                loggedIn ? <GitHubLinkPage setWebsiteLogs={setWebsiteLogs} /> : <Navigate to="/login" />
+                loggedIn ? <GitHubLinkPage setGithubLink={(link: string) => {}} navigateToLogin={() => {}} setWebsiteLogs={setWebsiteLogs} /> : <Navigate to="/login" />
               } />
               <Route path="/logs-security" element={
                 loggedIn ? <LogsAndSecurityPage websiteLogs={websiteLogs} /> : <Navigate to="/login" />
