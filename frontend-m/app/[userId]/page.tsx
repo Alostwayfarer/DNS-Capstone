@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
+import { NavBar } from '@/components/nav-bar'
 
 export default function UserDeployments({ params }: { params: { userId: string } }) {
   // This is mock data. In a real application, you would fetch this data from your backend.
@@ -11,8 +12,13 @@ export default function UserDeployments({ params }: { params: { userId: string }
     { id: '2', name: 'Backend API', type: 'BACKEND', status: 'building' },
     { id: '3', name: 'Python Script', type: 'PYTHON', status: 'error' },
   ]
+  const userId = "user123" // Replace with actual user ID from auth
+
 
   return (
+    <>
+              <NavBar userId={userId} />
+
     <div className="container mx-auto p-4 bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-white">Your Deployments</h1>
@@ -33,7 +39,7 @@ export default function UserDeployments({ params }: { params: { userId: string }
             <CardContent>
               <div className="flex justify-between items-center">
                 <Badge 
-                  variant={deployment.status === 'active' ? 'success' : deployment.status === 'building' ? 'warning' : 'destructive'}
+                  variant={deployment.status === 'active' ? 'default' : deployment.status === 'building' ? 'secondary' : 'destructive'}
                 >
                   {deployment.status}
                 </Badge>
@@ -49,6 +55,7 @@ export default function UserDeployments({ params }: { params: { userId: string }
         ))}
       </div>
     </div>
+    </>
   )
 }
 

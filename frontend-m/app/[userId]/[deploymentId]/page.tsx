@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Loader2 } from 'lucide-react'
+import { NavBar } from '@/components/nav-bar'
 
 export default function DeploymentPage({ params }: { params: { userId: string, deploymentId: string } }) {
   const [activeTab, setActiveTab] = useState('info')
@@ -24,9 +25,14 @@ export default function DeploymentPage({ params }: { params: { userId: string, d
     // After successful deletion, redirect to user's main page
     router.push(`/${params.userId}`)
   }
+  const userId = "user123" // Replace with actual user ID from auth
+
 
   return (
+    <>
+                <NavBar userId={userId} />
     <div className="container mx-auto p-4 bg-gray-900 min-h-screen">
+
       <h1 className="text-3xl font-bold mb-6 text-white">Deployment: {params.deploymentId}</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="bg-gray-800">
@@ -117,6 +123,7 @@ export default function DeploymentPage({ params }: { params: { userId: string, d
         <Link href={`/${params.userId}`} className="text-blue-400 hover:text-blue-300">← Back to All Deployments</Link>
       </div>
     </div>
+    </>
   )
 }
 

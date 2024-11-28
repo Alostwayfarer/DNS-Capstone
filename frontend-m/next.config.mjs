@@ -1,9 +1,9 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
     env: {
-        NEXT_PUBLIC_BUILD_SERVER_URL: process.env.BUILD_SERVER_URL || '',
-        NEXT_PUBLIC_CLIENT_SERVER_URL: process.env.CLIENT_SERVER_URL || '',
+      NEXT_PUBLIC_SERVER_1_API: process.env.NEXT_PUBLIC_SERVER_1_API,
+      NEXT_PUBLIC_SERVER_2_API: process.env.NEXT_PUBLIC_SERVER_2_API,
     },
-};
-
-export default nextConfig;
+  };
+  
+  export default nextConfig;
+  
