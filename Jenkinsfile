@@ -18,24 +18,13 @@ pipeline {
             
         }
     }
-
-       stage('SonarQube scan') {
-    steps {
-        script {
-            def scannerHome = tool 'sq-jenkins'
-            withSonarQubeEnv('SonarQube') {
-                sh """
-                    ${scannerHome}/bin/sonar-scanner \
-                    -Dsonar.projectKey=dns-capstone-scan \
-                    -Dsonar.projectName=dns-capstone-scan \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=http://3.110.85.15:9000 \
-                    -Dsonar.java.binaries=.
-                """
+        stage('SonarQube Analysis') {
+            def scannerHome = tool 'SonarScanner';
+            withSonarQubeEnv() {
+            sh "${scannerHome}/bin/sonar-scanner"
             }
         }
-    }
-}
+
         
         stage('Build client-api') {
             when {
