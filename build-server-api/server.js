@@ -7,6 +7,13 @@ const cors = require("cors");
 const execAsync = promisify(exec);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const client = require("prom-client") //Metric collection 
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+
+collectDefaultMetrics({register: client.register}); //Collecting default metrics
+
+
 
 // ///////////////////AWS
 const {
@@ -53,6 +60,13 @@ const ecrClient = new ECRClient(awsCredentials);
 const ecsClient = new ECSClient(awsCredentials);
 // configure ELB client
 const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
+
+//metrics 
+app.get("/metrics", async (req, res) => {
+    res.setHeader("Content-Type", client.register.contentType)
+    const metrics = await client.register.metrics();
+    res.send(metrics);
+});
 
 // Create Proxy
 app.post("/proxies", async (req, res) => {

@@ -15,6 +15,7 @@
     "express": "^4.21.0",
     "http-proxy": "^1.18.1",
     "nodemon": "^3.1.7",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "prom-client": "^15.1.3"
   }
 }

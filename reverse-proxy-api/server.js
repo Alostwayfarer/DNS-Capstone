@@ -4,6 +4,17 @@ const app = express();
 
 const port = process.env.PORT || 8000;
 const proxy = httpproxy.createProxy();
+const client = require("prom-client") //Metric collection 
+
+const collectDefaultMetrics = client.collectDefaultMetrics;
+
+collectDefaultMetrics({register: client.register}); //Collecting default metrics
+
+app.get("/metrics", async (req, res) => {
+    res.setHeader("Content-Type", client.register.contentType)
+    const metrics = await client.register.metrics();
+    res.send(metrics);
+});
 
 const http = require("http");
 
