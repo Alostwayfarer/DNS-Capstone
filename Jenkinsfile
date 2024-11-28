@@ -26,7 +26,7 @@ pipeline {
             }
             steps{
                 script{
-                    dockerImage= docker.build(client_registry+":$BUILD_NUMBER", "./client-api")
+                    dockerImage= docker.build(client_registry+":${BUILD_NUMBER}", "./client-api")
                 }
             }
             //     steps {
