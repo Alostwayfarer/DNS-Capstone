@@ -21,8 +21,8 @@ app.use(express.json());
 
 // Routes
 app.use("/", require("./routes/logs"));
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
+app.get("/health", (req, res) => {
+    res.status(200).send("OK");
 });
 
 app.listen(port, () => {

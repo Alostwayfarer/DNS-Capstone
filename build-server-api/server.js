@@ -7,6 +7,7 @@ const { promisify } = require("util");
 const execAsync = promisify(exec);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+
 const client = require("prom-client") //Metric collection 
 
 const collectDefaultMetrics = client.collectDefaultMetrics;
@@ -14,6 +15,11 @@ const collectDefaultMetrics = client.collectDefaultMetrics;
 collectDefaultMetrics({register: client.register}); //Collecting default metrics
 
 
+
+
+// At the top of the file
+const { DeploymentType } = require("@prisma/client");
+const { randomUUID } = require("crypto");
 
 // ///////////////////AWS
 const {
@@ -60,11 +66,59 @@ const ecsClient = new ECSClient(awsCredentials);
 // configure ELB client
 const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
 
+
 //metrics 
 app.get("/metrics", async (req, res) => {
     res.setHeader("Content-Type", client.register.contentType)
     const metrics = await client.register.metrics();
     res.send(metrics);
+
+const validateAndParseDeploymentType = (type) => {
+    // Convert to uppercase to match enum format
+    const normalizedType = type.toUpperCase();
+
+    // Check if valid deployment type
+    if (!Object.values(DeploymentType).includes(normalizedType)) {
+        throw new Error(
+            `Invalid deployment type: ${type}. Must be one of: ${Object.values(
+                DeploymentType
+            ).join(", ")}`
+        );
+    }
+
+    return normalizedType;
+};
+
+// Create User
+app.post("/users", async (req, res) => {
+    try {
+        const { name } = req.body;
+        const user = await prisma.user.create({
+            data: { name },
+        });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create Deployment
+app.post("/deployments", async (req, res) => {
+    try {
+        const { github_link, subdomain, deployment_type, userId } = req.body;
+        const deployment = await prisma.deployment.create({
+            data: {
+                github_link,
+                subdomain,
+                deployment_type,
+                userId,
+            },
+        });
+        res.json(deployment);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+
 });
 
 // Create Proxy
@@ -124,17 +178,23 @@ app.get("/health", async (req, res) => {
 });
 
 app.post("/deploy-repo", async (req, res) => {
+
     const { repoUrl, DeploymentName, buildType, userId, CMD, port } = req.body;
+
     const tempDir = path.join(__dirname, "temp-build", DeploymentName);
     // const dockerFilePath = path.join(tempDir, "Dockerfile");
     const ECRrepositoryName = `${DeploymentName}-repo`;
     const imageTag = "latest";
     let deleteimg;
     try {
+        const validatedDeploymentType =
+            validateAndParseDeploymentType(deploymentType);
+
         var ecrResponse = null;
         var taskDefResponse = null;
         var serviceResponse = null;
         var loadBalancerResponse = null;
+
         console.log(`Starting deployment for ${DeploymentName}`);
         ecrResponse = await createECRRepository(ECRrepositoryName);
         await cloneRepository(repoUrl, tempDir);
@@ -161,6 +221,7 @@ app.post("/deploy-repo", async (req, res) => {
                 break;
             default:
                 return res.status(400).json({ error: "Invalid buildType" });
+
         }
 
         console.log("default value=>", dockerFileName, defaultPort, defaultCMD);
@@ -536,6 +597,18 @@ app.post("/deploy-repo", async (req, res) => {
             },
         };
         console.log("---------------------------<>---------------------------");
+
+
+        // Validate deployment type
+        if (!Object.values(DeploymentType).includes(deploymentType)) {
+            throw new Error(
+                `Invalid deployment type. Must be one of: ${Object.values(
+                    DeploymentType
+                ).join(", ")}`
+            );
+        }
+
+
         // console.log(JSON.stringify(ECSServiceinput, null, 2));
         serviceResponse = await ecsClient.send(
             new CreateServiceCommand(ECSServiceinput)
@@ -543,6 +616,7 @@ app.post("/deploy-repo", async (req, res) => {
         console.log("ECS service created");
 
         console.log("Deployment completed successfully!");
+
         let user;
         if (userId) {
             user = await prisma.user.findUnique({ where: { user_id: userId } });
@@ -558,9 +632,11 @@ app.post("/deploy-repo", async (req, res) => {
             });
         }
 
+
         const deployment = await prisma.deployment.create({
             data: {
                 github_link: repoUrl,
+
                 subdomain: DeploymentName,
                 deployment_type: buildType.toUpperCase(),
                 Status: "DEPLOYED",
@@ -580,6 +656,7 @@ app.post("/deploy-repo", async (req, res) => {
             deployment: deployment,
 
             loadBalancer: loadBalancerResponse.LoadBalancers[0].DNSName,
+
             ECRrepository: ecrResponse,
             taskDefinition: taskDefResponse,
             service: serviceResponse,
