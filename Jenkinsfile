@@ -44,15 +44,20 @@ pipeline {
             }
                 steps {
                     script {
-                        // dockerimage = docker.build( app_frontend_Registry, "./front-deadend")
+                        // dockerimage = docker.build( app_frontend_Registry, "./front-deadend") : useful, will work too
                         sh "docker build -t dns-deploy ./front-deadend"
                         echo "build complete for frontend"
                         sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/dns-deploy:latest"
                         sh "docker tag dns-deploy:latest 311141548911.dkr.ecr.ap-south-1.amazonaws.com/dns-deploy:latest"
                         echo "docker push complete for frontend"
 
-                        
                     }
+                }
+            }
+
+            stage('Deploy to ECS'){
+                steps{
+                    sh 'aws ecs update-service --cluster dns-cluster --service dns-service --force-new-deployment'
                 }
             }
         }
