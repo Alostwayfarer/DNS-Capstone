@@ -4,16 +4,22 @@ pipeline {
     stages {
         stage('Fetch Code') {
             steps {
-                git url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
+                git branch: 'main', url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
             }
         }
         
         stage('SonarQube Scan') {
             steps {
                 script {
-                    def scannerHome = tool 'sq-jenkins' // Ensure 'sq-jenkins' matches your SonarQube Scanner tool name
-                    withSonarQubeEnv('Sonar-Qb-Server') {
-                        sh "${scannerHome}/bin/sonar-scanner"
+                    def scannerHome = tool 'SonarScanner' 
+                    withSonarQubeEnv('Sonar-Qb-Server') { 
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=DNS-Capstone \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://<your-sonarqube-server>:9000 \
+                        -Dsonar.login=<sonarqube-token>
+                        """
                     }
                 }
             }
