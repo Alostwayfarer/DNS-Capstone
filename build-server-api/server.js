@@ -8,11 +8,6 @@ const execAsync = promisify(exec);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const { prismaClient } = require("@prisma/client");
-const { PrismaClient } = require("@prisma/client");
-
-const prisma = new PrismaClient();
-
 // ///////////////////AWS
 const {
     ECRClient,
@@ -264,36 +259,36 @@ app.post("/deploy-repo", async (req, res) => {
     const ECRrepositoryName = `${DeploymentName}-repo`;
     const imageTag = "latest";
     try {
-        const { PrismaClient } = require("@prisma/client");
-        const prisma = new PrismaClient();
+        // const { PrismaClient } = require("@prisma/client");
+        // const prisma = new PrismaClient();
 
-        async function main() {
-            const randomUser = {
-                name: "Shweta",
-                email: "Shweta@gmail.com",
-                // name: faker.name.findName(),
-                // email: faker.internet.email(),
-            };
+        // async function main() {
+        //     const randomUser = {
+        //         name: "Shweta",
+        //         email: "Shweta@gmail.com",
+        //         // name: faker.name.findName(),
+        //         // email: faker.internet.email(),
+        //     };
 
-            const user = await prisma.user.create({
-                data: randomUser,
-            });
+        //     const user = await prisma.user.create({
+        //         data: randomUser,
+        //     });
 
-            console.log("Random user added:", user);
-        }
+        //     console.log("Random user added:", user);
+        // }
 
-        console.log("Running main...");
+        // console.log("Running main...");
 
-        main()
-            .catch((e) => {
-                console.error(e);
-                throw e;
-            })
-            .finally(async () => {
-                await prisma.$disconnect();
-            });
-        console.log("main completed");
-        // deploemny  - sudbdomain DEPloyemnt type , user id, , gh link
+        // main()
+        //     .catch((e) => {
+        //         console.error(e);
+        //         throw e;
+        //     })
+        //     .finally(async () => {
+        //         await prisma.$disconnect();
+        //     });
+        // console.log("main completed");
+        // // deploemny  - sudbdomain DEPloyemnt type , user id, , gh link
 
         var ecrResponse = null;
         var taskDefResponse = null;
