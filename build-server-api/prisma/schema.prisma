@@ -15,7 +15,6 @@ model User {
 }
 
 model Deployment {
-  // status          String
   deployment_id   String         @id @default(uuid())
   github_link     String
   subdomain       String         @unique @map("AWS_link")

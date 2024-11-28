@@ -8,14 +8,11 @@ const execAsync = promisify(exec);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const client = require("prom-client") //Metric collection 
+const client = require("prom-client"); //Metric collection
 
 const collectDefaultMetrics = client.collectDefaultMetrics;
 
-collectDefaultMetrics({register: client.register}); //Collecting default metrics
-
-
-
+collectDefaultMetrics({ register: client.register }); //Collecting default metrics
 
 // At the top of the file
 const { DeploymentType } = require("@prisma/client");
@@ -66,12 +63,12 @@ const ecsClient = new ECSClient(awsCredentials);
 // configure ELB client
 const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
 
-
-//metrics 
+//metrics
 app.get("/metrics", async (req, res) => {
-    res.setHeader("Content-Type", client.register.contentType)
+    res.setHeader("Content-Type", client.register.contentType);
     const metrics = await client.register.metrics();
     res.send(metrics);
+});
 
 const validateAndParseDeploymentType = (type) => {
     // Convert to uppercase to match enum format
@@ -118,7 +115,6 @@ app.post("/deployments", async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-
 });
 
 // Create Proxy
@@ -178,7 +174,6 @@ app.get("/health", async (req, res) => {
 });
 
 app.post("/deploy-repo", async (req, res) => {
-
     const { repoUrl, DeploymentName, buildType, userId, CMD, port } = req.body;
 
     const tempDir = path.join(__dirname, "temp-build", DeploymentName);
@@ -221,7 +216,6 @@ app.post("/deploy-repo", async (req, res) => {
                 break;
             default:
                 return res.status(400).json({ error: "Invalid buildType" });
-
         }
 
         console.log("default value=>", dockerFileName, defaultPort, defaultCMD);
@@ -278,84 +272,6 @@ app.post("/deploy-repo", async (req, res) => {
             const dockerFileContent = fs.readFileSync(dockerFilePath, "utf-8");
             console.log("Existing Dockerfile content:\n", dockerFileContent);
         }
-
-        // // Determine Dockerfile and default port based on buildType
-        // let dockerFileName;
-        // let defaultPort;
-        // switch (buildType.toUpperCase()) {
-        //     case "VITE":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 80;
-        //         break;
-        //     case "NODEJS":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 3000;
-        //         break;
-        //     case "PYTHON":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 3000;
-        //         break;
-        //     default:
-        //         return res.status(400).json({ error: "Invalid buildType" });
-        // }
-
-        // const dockerFilePath = path.join(tempDir, dockerFileName);
-
-        // // Create Dockerfile based on buildType if it doesn't exist
-        // if (!fs.existsSync(dockerFilePath)) {
-        //     let dockerContent;
-        //     if (buildType.toUpperCase() === "VITE") {
-        //         dockerContent = `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["npm", "run", "dev"]
-        //                         `;
-        //     } else if (buildType.toUpperCase() === "NODEJS") {
-        //         dockerContent = `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["node", "server.js"]
-        //                         `;
-        //     } else if (buildType.toUpperCase() === "PYTHON") {
-        //         dockerContent = `
-        //         FROM python:3.9
-        //         WORKDIR /app
-        //         COPY requirements.txt ./
-        //         RUN pip install --no-cache-dir -r requirements.txt
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["python", "app.py"]
-        //         `;
-        //     }
-        //     fs.writeFileSync(dockerFilePath, dockerContent.trim());
-        //     console.log(`${dockerFileName} created`);
-        // }
-
-        // // Check if Dockerfile exists, if not use a template
-        // if (!fs.existsSync(dockerFilePath)) {
-        //     console.log("Dockerfile not found, creating template...");
-        //     fs.writeFileSync(
-        //         dockerFilePath,
-        //         `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port}
-        //         CMD ["npm", "run","dev"]
-        //     `
-        //     );
-        //     console.log("Dockerfile template created");
-        // }
 
         // Build Docker image
         console.log("Building Docker image...");
@@ -529,7 +445,7 @@ app.post("/deploy-repo", async (req, res) => {
         };
         const listernercommand = new CreateListenerCommand(listenerinput);
 
-        const listenerresponse = await elbClient.send(listernercommand);
+        await elbClient.send(listernercommand);
 
         // console.log("Listener---", listenerresponse);
         console.log("Listener created");
@@ -598,7 +514,6 @@ app.post("/deploy-repo", async (req, res) => {
         };
         console.log("---------------------------<>---------------------------");
 
-
         // Validate deployment type
         if (!Object.values(DeploymentType).includes(deploymentType)) {
             throw new Error(
@@ -607,7 +522,6 @@ app.post("/deploy-repo", async (req, res) => {
                 ).join(", ")}`
             );
         }
-
 
         // console.log(JSON.stringify(ECSServiceinput, null, 2));
         serviceResponse = await ecsClient.send(
@@ -627,11 +541,9 @@ app.post("/deploy-repo", async (req, res) => {
             user = await prisma.user.create({
                 data: {
                     name: "",
-                    // email: DeploymentName,
                 },
             });
         }
-
 
         const deployment = await prisma.deployment.create({
             data: {
