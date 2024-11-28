@@ -1,18 +1,22 @@
 pipeline {
     agent any
     
-    stages{
-        stage('fetch code') {
-                steps{
-                       git url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
-                }
+    stages {
+        stage('Fetch Code') {
+            steps {
+                git url: 'https://github.com/Alostwayfarer/DNS-Capstone.git'
+            }
         }
-        stage('scan'){
-        script{
-            withSonarQubeEnv(installationName: 'Sonar-Qb-Server'){
-                sh '${scannerHome}/bin/sonar-scanner'
-                        }
+        
+        stage('SonarQube Scan') {
+            steps {
+                script {
+                    def scannerHome = tool 'sq-jenkins' // Ensure 'sq-jenkins' matches your SonarQube Scanner tool name
+                    withSonarQubeEnv('Sonar-Qb-Server') {
+                        sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
             }
+        }
+    }
 }
