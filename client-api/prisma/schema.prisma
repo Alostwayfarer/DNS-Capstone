@@ -10,6 +10,7 @@ datasource db {
 model User {
   user_id     String       @id @default(uuid())
   name        String
+  email       String?      @unique
   deployments Deployment[]
 }
 
@@ -18,6 +19,7 @@ model Deployment {
   github_link     String
   subdomain       String         @unique @map("AWS_link")
   deployment_type DeploymentType
+  Status          BuildStatus?   @default(CLONING)
   user            User           @relation(fields: [userId], references: [user_id])
   userId          String
   Proxy           Proxy[]
@@ -35,4 +37,12 @@ enum DeploymentType {
   FRONTEND
   BACKEND
   PYTHON
+}
+
+enum BuildStatus {
+  CLONING
+  BUILDING
+  DEPLOYING
+  DEPLOYED
+  FAILED
 }
