@@ -7,7 +7,9 @@ const cors = require("cors");
 const execAsync = promisify(exec);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-
+// At the top of the file
+const { DeploymentType } = require("@prisma/client");
+const { randomUUID } = require("crypto");
 // ///////////////////AWS
 const {
     ECRClient,
@@ -54,73 +56,21 @@ const ecsClient = new ECSClient(awsCredentials);
 // configure ELB client
 const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
 
-// Create User
-app.post("/users", async (req, res) => {
-    try {
-        const { name } = req.body;
-        const user = await prisma.user.create({
-            data: { name },
-        });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+const validateAndParseDeploymentType = (type) => {
+    // Convert to uppercase to match enum format
+    const normalizedType = type.toUpperCase();
 
-// Create Deployment
-app.post("/deployments", async (req, res) => {
-    try {
-        const { github_link, subdomain, deployment_type, userId } = req.body;
-        const deployment = await prisma.deployment.create({
-            data: {
-                github_link,
-                subdomain,
-                deployment_type,
-                userId,
-            },
-        });
-        res.json(deployment);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    // Check if valid deployment type
+    if (!Object.values(DeploymentType).includes(normalizedType)) {
+        throw new Error(
+            `Invalid deployment type: ${type}. Must be one of: ${Object.values(
+                DeploymentType
+            ).join(", ")}`
+        );
     }
-});
 
-// Create Proxy
-app.post("/proxies", async (req, res) => {
-    try {
-        const { deployment_id, subdomain, AWS_link } = req.body;
-        const proxy = await prisma.proxy.create({
-            data: {
-                deployment_id,
-                subdomain,
-                AWS_link,
-            },
-        });
-        res.json(proxy);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get all data with relationships
-app.get("/data", async (req, res) => {
-    try {
-        const data = await prisma.user.findMany({
-            include: {
-                deployments: {
-                    include: {
-                        Proxy: true,
-                    },
-                },
-            },
-        });
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-//
+    return normalizedType;
+};
 
 // Create User
 app.post("/users", async (req, res) => {
@@ -253,13 +203,16 @@ app.get("/images", async (req, res) => {
 });
 
 app.post("/deploy-repo", async (req, res) => {
-    const { repoUrl, DeploymentName, port } = req.body;
+    const { repoUrl, DeploymentName, port, deploymentType } = req.body;
     const tempDir = path.join(__dirname, "temp-build", DeploymentName);
     const dockerFilePath = path.join(tempDir, "Dockerfile");
     const ECRrepositoryName = `${DeploymentName}-repo`;
     const imageTag = "latest";
 
     try {
+        const validatedDeploymentType =
+            validateAndParseDeploymentType(deploymentType);
+
         var ecrResponse = null;
         var taskDefResponse = null;
         var serviceResponse = null;
@@ -271,14 +224,6 @@ app.post("/deploy-repo", async (req, res) => {
         // Create ECR repository
         const ECRinput = {
             repositoryName: ECRrepositoryName, // required
-            // tags: [
-            //     // TagList
-            //     {
-            //         // Tag
-            //         Key: "STRING_VALUE", // required
-            //         Value: "STRING_VALUE", // required
-            //     },
-            // ],
             imageTagMutability: "MUTABLE",
             imageScanningConfiguration: {
                 // ImageScanningConfiguration
@@ -570,6 +515,15 @@ app.post("/deploy-repo", async (req, res) => {
 
         console.log("---------------------------<>---------------------------");
 
+        // Validate deployment type
+        if (!Object.values(DeploymentType).includes(deploymentType)) {
+            throw new Error(
+                `Invalid deployment type. Must be one of: ${Object.values(
+                    DeploymentType
+                ).join(", ")}`
+            );
+        }
+
         // console.log(JSON.stringify(ECSServiceinput, null, 2));
         serviceResponse = await ecsClient.send(
             new CreateServiceCommand(ECSServiceinput)
@@ -577,12 +531,66 @@ app.post("/deploy-repo", async (req, res) => {
         console.log("ECS service created");
 
         console.log("Deployment completed successfully!");
+
+        // // Validate deployment type
+        // if (!Object.values(DeploymentType).includes(deploymentType)) {
+        //     throw new Error(
+        //         `Invalid deployment type. Must be one of: ${Object.values(
+        //             DeploymentType
+        //         ).join(", ")}`
+        //     );
+        // }
+
+        const deployment = await prisma.deployment.create({
+            data: {
+                github_link: repoUrl,
+                // In schema, subdomain is mapped to AWS_link
+                subdomain: loadBalancerResponse.LoadBalancers[0].DNSName,
+                deployment_type: validatedDeploymentType,
+                // Add required userId
+                // userId: req.body.userId || randomUUID(),
+                user: {
+                    connectOrCreate: {
+                        where: {
+                            user_id: req.body.userId || randomUUID(),
+                        },
+                        create: {
+                            name: req.body.userName || "Anonymous",
+                        },
+                    },
+                },
+            },
+            include: {
+                user: true,
+            },
+        });
+
+        // Create proxy record
+        const proxy = await prisma.proxy.create({
+            data: {
+                deployment_id: deployment.deployment_id,
+                subdomain: `${DeploymentName}.proxy.yourdomain.com`,
+                AWS_link: loadBalancerResponse.LoadBalancers[0].DNSName,
+            },
+        });
+
         res.json({
             success: true,
+            url: loadBalancerResponse.LoadBalancers[0].DNSName,
+            deployment: {
+                id: deployment.deployment_id,
+                status: deployment.status,
+                url: deployment.AWS_link,
+                userId: deployment.userId,
+            },
+            proxy: {
+                id: proxy.proxy_id,
+                url: proxy.AWS_link,
+            },
+            loadBalancer: loadBalancerResponse,
             ECRrepository: ecrResponse,
             taskDefinition: taskDefResponse,
             service: serviceResponse,
-            loadBalancer: loadBalancerResponse,
             targetGroup: targetGroupResponse.TargetGroups[0].TargetGroupArn,
         });
     } catch (error) {
@@ -602,114 +610,3 @@ app.post("/deploy-repo", async (req, res) => {
 app.listen(port, () => {
     console.log(`Server listening on port http://localhost:${port} , `);
 });
-
-// app.get("/put-image", async (req, res) => {
-//     try {
-//         const localImageName = "alpine";
-//         const imageTag = "latest";
-//         const ECRrepositoryName = "my-app-repo";
-//         const authCommand = new GetAuthorizationTokenCommand({});
-//         const authResponse = await ecrClient.send(authCommand);
-//         // Decode authorization token
-//         const authToken = Buffer.from(
-//             authResponse.authorizationData[0].authorizationToken,
-//             "base64"
-//         )
-//             .toString("utf-8")
-//             .split(":")[1];
-
-//         // console.log(authToken);
-//         const registryUri =
-//             authResponse.authorizationData[0].proxyEndpoint.replace(
-//                 "https://",
-//                 ""
-//             );
-//         console.log(registryUri);
-
-//         console.log("Logging in to ECR...");
-//         await execAsync(`docker login -u AWS -p ${authToken} ${registryUri}`);
-
-//         // Tag the local image
-//         const remoteImageUri = `${registryUri}/${ECRrepositoryName}:${imageTag}`;
-//         console.log(
-//             `Tagging local image ${localImageName} as ${remoteImageUri}...`
-//         );
-//         await execAsync(`docker tag ${localImageName} ${remoteImageUri}`);
-
-//         // Push the image
-//         console.log("Pushing image to ECR...");
-//         await execAsync(`docker push ${remoteImageUri}`);
-
-//         console.log("Image upload completed successfully!");
-//         res.status(200).json({
-//             authres: authResponse,
-//             authToken: authToken,
-//             registryUri: registryUri,
-//         });
-//     } catch (e) {
-//         console.log(e);
-//         res.status(500).json({ error: e });
-//     }
-// });
-
-// app.post("/deploy", async (req, res) => {
-//     try {
-//         // Register Task Definition
-//         const taskDefResponse = await ecsClient.send(
-//             new RegisterTaskDefinitionCommand({
-//                 family: "my-task-family",
-//                 containerDefinitions: [
-//                     {
-//                         name: "my-container",
-//                         image: `${process.env.AWS_ACCOUNT_ID}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/my-repo:latest`,
-//                         memory: 512,
-//                         cpu: 256,
-//                         essential: true,
-//                         portMappings: [
-//                             {
-//                                 containerPort: 80,
-//                                 hostPort: 80,
-//                                 protocol: "tcp",
-//                             },
-//                         ],
-//                     },
-//                 ],
-//                 requiresCompatibilities: ["FARGATE"],
-//                 networkMode: "awsvpc",
-//                 cpu: "256",
-//                 memory: "512",
-//             })
-//         );
-
-//         // Create ECS Service
-//         const serviceResponse = await ecsClient.send(
-//             new CreateServiceCommand({
-//                 cluster: process.env.ECS_CLUSTER_NAME,
-//                 serviceName: "my-service",
-//                 taskDefinition:
-//                     taskDefResponse.taskDefinition.taskDefinitionArn,
-//                 desiredCount: 1,
-//                 launchType: "FARGATE",
-//                 networkConfiguration: {
-//                     awsvpcConfiguration: {
-//                         subnets: [process.env.SUBNET_ID],
-//                         securityGroups: [process.env.SECURITY_GROUP_ID],
-//                         assignPublicIp: "ENABLED",
-//                     },
-//                 },
-//             })
-//         );
-
-//         res.json({
-//             success: true,
-//             taskDefinition: taskDefResponse.taskDefinition.taskDefinitionArn,
-//             service: serviceResponse.service.serviceArn,
-//         });
-//     } catch (error) {
-//         console.error("Deployment failed:", error);
-//         res.status(500).json({
-//             success: false,
-//             error: error.message,
-//         });
-//     }
-// });
