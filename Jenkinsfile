@@ -20,11 +20,13 @@ pipeline {
     }
 
         stage('SonarQube scan'){
-            def scannerHome = tool 'sq-jenkins';
-            withSonarQubeEnv('SonarQube') {
-                sh "${scannerHome}/bin/sonar-scanner"
+            steps{
+                def scannerHome = tool 'sq-jenkins';
+                withSonarQubeEnv('SonarQube') {
+                    sh "${scannerHome}/bin/sonar-scanner"
             }
         }
+    }
         
         stage('Build client-api') {
             when {
