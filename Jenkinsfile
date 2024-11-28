@@ -17,7 +17,25 @@ pipeline {
                 echo "Building the app"
             
         }
+    }
+
+       stage('SonarQube scan') {
+    steps {
+        script {
+            def scannerHome = tool 'sq-jenkins'
+            withSonarQubeEnv('SonarQube') {
+                sh """
+                    ${scannerHome}/bin/sonar-scanner \
+                    -Dsonar.projectKey=dns-capstone-scan \
+                    -Dsonar.projectName=dns-capstone-scan \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=http://3.110.85.15:9000 \
+                    -Dsonar.java.binaries=.
+                """
+            }
         }
+    }
+}
         
         stage('Build client-api') {
             when {
@@ -44,15 +62,20 @@ pipeline {
             }
                 steps {
                     script {
-                        // dockerimage = docker.build( app_frontend_Registry, "./front-deadend")
+                        // dockerimage = docker.build( app_frontend_Registry, "./front-deadend") : useful, will work too
                         sh "docker build -t dns-deploy ./front-deadend"
                         echo "build complete for frontend"
                         sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/dns-deploy:latest"
                         sh "docker tag dns-deploy:latest 311141548911.dkr.ecr.ap-south-1.amazonaws.com/dns-deploy:latest"
                         echo "docker push complete for frontend"
 
-                        
                     }
+                }
+            }
+
+            stage('Deploy to ECS'){
+                steps{
+                    sh 'aws ecs update-service --cluster DNS --service backend-service --force-new-deployment'
                 }
             }
         }
