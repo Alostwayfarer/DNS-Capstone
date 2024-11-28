@@ -54,105 +54,6 @@ const ecsClient = new ECSClient(awsCredentials);
 // configure ELB client
 const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
 
-// Create User
-app.post("/users", async (req, res) => {
-    try {
-        const { name } = req.body;
-        const user = await prisma.user.create({
-            data: { name },
-        });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Create Deployment
-app.post("/deployments", async (req, res) => {
-    try {
-        const { github_link, subdomain, deployment_type, userId } = req.body;
-        const deployment = await prisma.deployment.create({
-            data: {
-                github_link,
-                subdomain,
-                deployment_type,
-                userId,
-            },
-        });
-        res.json(deployment);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Create Proxy
-app.post("/proxies", async (req, res) => {
-    try {
-        const { deployment_id, subdomain, AWS_link } = req.body;
-        const proxy = await prisma.proxy.create({
-            data: {
-                deployment_id,
-                subdomain,
-                AWS_link,
-            },
-        });
-        res.json(proxy);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get all data with relationships
-app.get("/data", async (req, res) => {
-    try {
-        const data = await prisma.user.findMany({
-            include: {
-                deployments: {
-                    include: {
-                        Proxy: true,
-                    },
-                },
-            },
-        });
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-//
-
-// Create User
-app.post("/users", async (req, res) => {
-    try {
-        const { name } = req.body;
-        const user = await prisma.user.create({
-            data: { name },
-        });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Create Deployment
-app.post("/deployments", async (req, res) => {
-    try {
-        const { github_link, subdomain, deployment_type, userId } = req.body;
-        const deployment = await prisma.deployment.create({
-            data: {
-                github_link,
-                subdomain,
-                deployment_type,
-                userId,
-            },
-        });
-        res.json(deployment);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Create Proxy
 app.post("/proxies", async (req, res) => {
     try {
@@ -191,13 +92,14 @@ app.get("/data", async (req, res) => {
 app.get("/health", async (req, res) => {
     try {
         // Check ECR
+        console.log("Checking ECR...");
         const ecrCommand = new DescribeRegistryCommand({});
         const ecrResponse = await ecrClient.send(ecrCommand);
 
         // Check ECS
         const ecsCommand = new ListClustersCommand({});
         const ecsResponse = await ecsClient.send(ecsCommand);
-
+        //   console.log("Checking ECR...");
         res.status(200).json({
             status: "OK",
             ecr: ecrResponse,
@@ -205,20 +107,6 @@ app.get("/health", async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ status: "Error", message: error.message });
-    }
-});
-
-app.get("/list-task", async (req, res) => {
-    try {
-        const input = {};
-        const command = new ListTaskDefinitionsCommand(input);
-        const response = await ecsClient.send(command);
-        console.log("res", response);
-
-        res.status(200).json({ taskdef: response });
-    } catch (e) {
-        console.log(e);
-        res.status(500).json({ error: e });
     }
 });
 
@@ -259,37 +147,6 @@ app.post("/deploy-repo", async (req, res) => {
     const ECRrepositoryName = `${DeploymentName}-repo`;
     const imageTag = "latest";
     try {
-        // const { PrismaClient } = require("@prisma/client");
-        // const prisma = new PrismaClient();
-
-        // async function main() {
-        //     const randomUser = {
-        //         name: "Shweta",
-        //         email: "Shweta@gmail.com",
-        //         // name: faker.name.findName(),
-        //         // email: faker.internet.email(),
-        //     };
-
-        //     const user = await prisma.user.create({
-        //         data: randomUser,
-        //     });
-
-        //     console.log("Random user added:", user);
-        // }
-
-        // console.log("Running main...");
-
-        // main()
-        //     .catch((e) => {
-        //         console.error(e);
-        //         throw e;
-        //     })
-        //     .finally(async () => {
-        //         await prisma.$disconnect();
-        //     });
-        // console.log("main completed");
-        // // deploemny  - sudbdomain DEPloyemnt type , user id, , gh link
-
         var ecrResponse = null;
         var taskDefResponse = null;
         var serviceResponse = null;
@@ -301,14 +158,7 @@ app.post("/deploy-repo", async (req, res) => {
         // Create ECR repository
         const ECRinput = {
             repositoryName: ECRrepositoryName, // required
-            // tags: [
-            //     // TagList
-            //     {
-            //         // Tag
-            //         Key: "STRING_VALUE", // required
-            //         Value: "STRING_VALUE", // required
-            //     },
-            // ],
+
             imageTagMutability: "MUTABLE",
             imageScanningConfiguration: {
                 // ImageScanningConfiguration
