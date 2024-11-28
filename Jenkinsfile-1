@@ -1,0 +1,11 @@
+pipeline {
+    agent any
+    
+        stage('scan'){
+        script{
+            withSonarQubeEnv(installationName: 'Sonar-Qb-Server'){
+                sh '${scannerHome}/bin/sonar-scanner'
+                        }
+                    }
+                }
+            }
