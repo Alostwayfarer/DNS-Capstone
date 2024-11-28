@@ -15,12 +15,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   // You'll need to get the userId from your auth context/session
-  const userId = "user123" // Replace with actual user ID from auth
 
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-gray-900 text-white`}>
-        <NavBar userId={userId} />
+        {/* <NavBar userId={userId} /> */}
         <main>
           {children}
         </main>

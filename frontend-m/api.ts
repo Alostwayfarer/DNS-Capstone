@@ -1,37 +1,24 @@
-// C:\Users\SHWETASINGH\DNS-Capstone\frontend-m\api.ts
+// api.ts
+import axios from 'axios';
 
-const BUILD_SERVER_URL = process.env.NEXT_PUBLIC_BUILD_SERVER_URL || 'http://localhost:8011';
-const CLIENT_SERVER_URL = process.env.NEXT_PUBLIC_CLIENT_SERVER_URL || 'http://localhost:8012';
+// Create axios instances for different services
+const buildServerApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_BUILD_SERVER_URL || 'http://localhost:8011'
+});
 
-export async function apiCall(
-    endpoint: string,
-    options: RequestInit = {},
-    useBuildServer: boolean = false // Flag to choose between servers
-): Promise<any> {
-    const baseURL = useBuildServer ? BUILD_SERVER_URL : CLIENT_SERVER_URL;
+const clientServerApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_CLIENT_SERVER_URL || 'http://localhost:8012'
+});
 
-    try {
-        const response = await fetch(`${baseURL}/${endpoint}`, options);
+// Test function
+export const testConnection = async () => {
+  try {
+    const response = await buildServerApi.get('/health');
+    console.log('Connection successful:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Connection failed:', error);
+    throw error;
+  }
+};
 
-        if (!response.ok) {
-            throw new Error(
-                `HTTP error! Status: ${response.status}, Message: ${response.statusText}`
-            );
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error(`API Call Error [${endpoint}]:`, error);
-        throw error; // Re-throw for caller handling
-    }
-}
-
-// Example: Deploy Function (Uses Build Server)
-export async function deployBuild(): Promise<any> {
-    return apiCall('deploy', { method: 'POST' }, true); // `true` indicates using BUILD_SERVER_URL
-}
-
-// Example: Fetch Logs (Uses Client Server)
-export async function getLogs(): Promise<any> {
-    return apiCall('logs', { method: 'GET' }, false); // `false` indicates using CLIENT_SERVER_URL
-}
