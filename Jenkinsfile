@@ -13,6 +13,7 @@ pipeline {
     stages {
         stage('Initialize') {
             steps {
+                sh"aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 311141548911.dkr.ecr.ap-south-1.amazonaws.com"
                 sh "aws configure list"
                 echo "Building the app"
             
@@ -25,13 +26,22 @@ pipeline {
             }
                 steps {
                     script {
+                        def currentBuildNumber = env.BUILD_NUMBER.toInteger()
+                    
+                        // Perform subtraction
+                        def adjustedBuildNumber = currentBuildNumber - 30
+                        
+                        // Handle cases where BUILD_NUMBER is less than 30
+                        if (adjustedBuildNumber < 0) {
+                            adjustedBuildNumber = 0
+                        }
                         // dockerimage = docker.build( "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"+":${BUILD_NUMBER}", "./client-api")
-                        sh "docker build -t client-api:${BUILD_NUMBER} ./client-api"
+                        sh "docker build -t client-api:${adjustedBuildNumber} ./client-api"
 
                         echo "build complete for client"
 
-                        sh "docker tag client-api:${BUILD_NUMBER} 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${BUILD_NUMBER}"
-                        sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${BUILD_NUMBER}"
+                        sh "docker tag client-api:${adjustedBuildNumber} 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${adjustedBuildNumber}"
+                        sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${adjustedBuildNumber}"
                         echo "docker push complete for client-api"
 
                     
