@@ -24,7 +24,14 @@ pipeline {
         script {
             def scannerHome = tool 'sq-jenkins'
             withSonarQubeEnv('SonarQube') {
-                sh "${scannerHome}/bin/sonar-scanner"
+                sh """
+                    ${scannerHome}/bin/sonar-scanner \
+                    -Dsonar.projectKey=dns-capstone-scan \
+                    -Dsonar.projectName=dns-capstone-scan \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=http://3.110.85.15:9000 \
+                    -Dsonar.java.binaries=.
+                """
             }
         }
     }
