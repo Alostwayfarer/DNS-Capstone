@@ -5,8 +5,8 @@ pipeline {
         BRANCH_NAME = "${env.BRANCH_NAME}"
         IMAGE_TAG = "${BUILD_NUMBER}"
         registryCredential = 'ecr:ap-south-1:aws_creds_dns'
-        app_client_Registry = "client-api"
-        RegistryURL = "https:311141548911.dkr.ecr.ap-south-1.amazonaws.com/"
+        client_registry = "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api "
+        clientRegistryURL = "https:// 311141548911.dkr.ecr.ap-south-1.amazonaws.com/"
         app_frontend_Registry = "dns-deploy"
     }
     
@@ -24,29 +24,34 @@ pipeline {
             when {
                 branch 'client-api'
             }
-                steps {
-                    script {
-                        def currentBuildNumber = env.BUILD_NUMBER.toInteger()
-                    
-                        // Perform subtraction
-                        def adjustedBuildNumber = currentBuildNumber - 30
-                        
-                        // Handle cases where BUILD_NUMBER is less than 30
-                        if (adjustedBuildNumber < 0) {
-                            adjustedBuildNumber = 0
-                        }
-                        // dockerimage = docker.build( "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"+":${BUILD_NUMBER}", "./client-api")
-                        sh "docker build -t client-api:${adjustedBuildNumber} ./client-api"
-
-                        echo "build complete for client"
-
-                        sh "docker tag client-api:${adjustedBuildNumber} 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${adjustedBuildNumber}"
-                        sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${adjustedBuildNumber}"
-                        echo "docker push complete for client-api"
-
-                    
+            steps{
+                script{
+                    dockerImage= docker.build(client_registry+":$BUILD_NUMBER", "./client-api")
                 }
             }
+            //     steps {
+            //         script {
+            //             def currentBuildNumber = env.BUILD_NUMBER.toInteger()
+                    
+            //             // Perform subtraction
+            //             def adjustedBuildNumber = currentBuildNumber - 30
+                        
+            //             // Handle cases where BUILD_NUMBER is less than 30
+            //             if (adjustedBuildNumber < 0) {
+            //                 adjustedBuildNumber = 0
+            //             }
+            //             // dockerimage = docker.build( "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"+":${BUILD_NUMBER}", "./client-api")
+            //             sh "docker build -t client-api:${adjustedBuildNumber} ./client-api"
+
+            //             echo "build complete for client"
+
+            //             sh "docker tag client-api:${adjustedBuildNumber} 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${adjustedBuildNumber}"
+            //             sh "docker push 311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api:${adjustedBuildNumber}"
+            //             echo "docker push complete for client-api"
+
+                    
+            //     }
+            // }
         }
         stage('Build frontend') {
             when {
@@ -63,13 +68,23 @@ pipeline {
 
                     }
                 }
-            }
+        }
 
-            stage('Deploy to ECS'){
-                steps{
-                    sh 'aws ecs update-service --cluster DNS --service backend-service --force-new-deployment'
+        stage('Push to ECR') {
+            steps {
+                script {
+                    docker.withRegistry(clientRegistryURL, registryCredential) {
+                        dockerImage.push("${BUILD_NUMBER}")
+                        dockerImage.push("latest")
+                    }
                 }
             }
+        }
+        // stage('Deploy to ECS'){
+        //     steps{
+        //         sh 'aws ecs update-service --cluster DNS --service backend-service --force-new-deployment'
+        //     }
+        // }
         }
     }
 
