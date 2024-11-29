@@ -5,7 +5,7 @@ pipeline {
         BRANCH_NAME = "${env.BRANCH_NAME}"
         IMAGE_TAG = "${BUILD_NUMBER}"
         registryCredential = 'ecr:ap-south-1:aws_creds_dns'
-        CLIENT_REGISTRY = "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api "
+        CLIENT_REGISTRY = "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"
         clientRegistryURL = "https://311141548911.dkr.ecr.ap-south-1.amazonaws.com/"
         app_frontend_Registry = "dns-deploy"
     }
@@ -55,7 +55,7 @@ pipeline {
                     
                     // Build the Docker image with the adjusted tag
                     sh """
-                        docker build -t client-api:${imageTag} ./client-api
+                        docker build -t ${env.CLIENT_REGISTRY}:${imageTag} ./client-api
                     """
                     
                     // Tag the image with the ECR repository URL and adjusted build number
