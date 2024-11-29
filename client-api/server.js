@@ -3,7 +3,6 @@ const cors = require("cors");
 const { PrismaClient } = require('@prisma/client');
 require("dotenv").config();
 const client = require("prom-client"); //Metric collection
-const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const app = express();
@@ -34,7 +33,7 @@ app.get("/metrics", async (req, res) => {
 
 app.post('/login', async (req, res) => {
     try {
-        const { user_id, name, email } = req.query;
+        const { user_id, name, email } = req.body;
 
         // Validate input
         if (!user_id || !name || !email) {
