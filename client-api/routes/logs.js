@@ -4,6 +4,7 @@ const { getCloudWatchLogs } = require("../services/cloudwatchlogs");
 
 router.get("/logs/:repoName", async (req, res) => {
     try {
+        console.log("Fetching logs for repo:", req.params.repoName);
         const { repoName } = req.params;
         const logGroupName = `/ecs/${repoName}-logs`;
         const logsData = await getCloudWatchLogs(logGroupName);
