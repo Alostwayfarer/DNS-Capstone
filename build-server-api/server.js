@@ -8,14 +8,11 @@ const execAsync = promisify(exec);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const client = require("prom-client") //Metric collection 
+const client = require("prom-client"); //Metric collection
 
 const collectDefaultMetrics = client.collectDefaultMetrics;
 
-collectDefaultMetrics({register: client.register}); //Collecting default metrics
-
-
-
+collectDefaultMetrics({ register: client.register }); //Collecting default metrics
 
 // At the top of the file
 const { DeploymentType } = require("@prisma/client");
@@ -66,12 +63,12 @@ const ecsClient = new ECSClient(awsCredentials);
 // configure ELB client
 const elbClient = new ElasticLoadBalancingV2Client(awsCredentials);
 
-
-//metrics 
+//metrics
 app.get("/metrics", async (req, res) => {
-    res.setHeader("Content-Type", client.register.contentType)
+    res.setHeader("Content-Type", client.register.contentType);
     const metrics = await client.register.metrics();
     res.send(metrics);
+});
 
 const validateAndParseDeploymentType = (type) => {
     // Convert to uppercase to match enum format
@@ -118,7 +115,6 @@ app.post("/deployments", async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-
 });
 
 // Create Proxy
@@ -178,7 +174,6 @@ app.get("/health", async (req, res) => {
 });
 
 app.post("/deploy-repo", async (req, res) => {
-
     const { repoUrl, DeploymentName, buildType, userId, CMD, port } = req.body;
 
     const tempDir = path.join(__dirname, "temp-build", DeploymentName);
@@ -187,9 +182,6 @@ app.post("/deploy-repo", async (req, res) => {
     const imageTag = "latest";
     let deleteimg;
     try {
-        const validatedDeploymentType =
-            validateAndParseDeploymentType(deploymentType);
-
         var ecrResponse = null;
         var taskDefResponse = null;
         var serviceResponse = null;
@@ -221,7 +213,6 @@ app.post("/deploy-repo", async (req, res) => {
                 break;
             default:
                 return res.status(400).json({ error: "Invalid buildType" });
-
         }
 
         console.log("default value=>", dockerFileName, defaultPort, defaultCMD);
@@ -363,6 +354,17 @@ app.post("/deploy-repo", async (req, res) => {
             `docker build -t ${ECRrepositoryName} ${tempDir}`
         );
         console.log("pp", pp);
+
+        // Scan Docker image with Trivy
+        console.log("Scanning Docker image with Trivy...");
+        try {
+            const trivyReport = await execAsync(
+                `trivy image ${ECRrepositoryName}`
+            );
+            console.log("Trivy Scan Report:\n", trivyReport);
+        } catch (trivyError) {
+            console.error("Trivy scan failed:", trivyError);
+        }
         console.log("Docker image built successfully");
 
         // Authenticate and push Docker image to ECR
@@ -598,16 +600,14 @@ app.post("/deploy-repo", async (req, res) => {
         };
         console.log("---------------------------<>---------------------------");
 
-
         // Validate deployment type
-        if (!Object.values(DeploymentType).includes(deploymentType)) {
+        if (!Object.values(DeploymentType).includes(buildType)) {
             throw new Error(
                 `Invalid deployment type. Must be one of: ${Object.values(
                     DeploymentType
                 ).join(", ")}`
             );
         }
-
 
         // console.log(JSON.stringify(ECSServiceinput, null, 2));
         serviceResponse = await ecsClient.send(
@@ -631,7 +631,6 @@ app.post("/deploy-repo", async (req, res) => {
                 },
             });
         }
-
 
         const deployment = await prisma.deployment.create({
             data: {

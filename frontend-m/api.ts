@@ -2,19 +2,23 @@
 import axios from 'axios';
 
 // Create axios instances for different services
-const buildServerApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BUILD_SERVER_URL || 'http://localhost:8011'
+export const buildServerApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_BUILD_SERVER_URL || 'http://localhost:8011',
+  timeout: 10000 // 10 seconds
 });
 
-const clientServerApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_CLIENT_SERVER_URL || 'http://localhost:8012'
+export const clientServerApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_CLIENT_SERVER_URL || 'http://localhost:8012',
+  timeout: 10000 // 10 seconds
 });
 
 // Test function
 export const testConnection = async () => {
   try {
     const response = await buildServerApi.get('/health');
-    console.log('Connection successful:', response.data);
+    const response2 = await clientServerApi.get('/health');
+    console.log('Connection to build successful:', response.data);
+    console.log('Connection server successful:', response2.data);
     return response.data;
   } catch (error) {
     console.error('Connection failed:', error);
@@ -22,3 +26,5 @@ export const testConnection = async () => {
   }
 };
 
+
+// module.exports = { clientServerApi, buildServerApi, testConnection };
