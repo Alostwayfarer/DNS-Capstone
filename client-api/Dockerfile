@@ -8,10 +8,10 @@ COPY package*.json ./
 
 #Run npm install
 RUN npm install
-RUN npx prisma generate
 
 #Bundle app souce
 COPY . .
+RUN npx prisma generate
 
 EXPOSE 8000
 
