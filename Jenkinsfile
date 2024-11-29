@@ -6,7 +6,7 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
         registryCredential = 'ecr:ap-south-1:aws_creds_dns'
         client_registry = "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api "
-        clientRegistryURL = "https:// 311141548911.dkr.ecr.ap-south-1.amazonaws.com/"
+        clientRegistryURL = "https://311141548911.dkr.ecr.ap-south-1.amazonaws.com/"
         app_frontend_Registry = "dns-deploy"
     }
     
@@ -26,7 +26,14 @@ pipeline {
             }
             steps{
                 script{
-                    dockerImage= docker.build(client_registry + ":${BUILD_NUMBER}", "./client-api")
+                    echo"biudling ${client_registry} : ${BUILD_NUMBER}"
+                    def client_registry = "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"
+                    def imageName = "${client_registry}:${BUILD_NUMBER}"
+                    dockerImage = docker.build(imageName, "./client-api")
+                    // sh "docker tag ${imageName} ${client_registry}:latest"
+                    // sh "docker push ${client_registry}:latest"
+
+                    // dockerImage= docker.build(client_registry + ":${BUILD_NUMBER}", "./client-api")
                 }
             }
             //     steps {
