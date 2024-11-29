@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,9 @@ export default function Home() {
     const [deploymentStep, setDeploymentStep] = useState(0);
     const [error, setError] = useState("");
     const router = useRouter();
+    const [generatedName, setGeneratedName] = useState("");
+    const [port, setPort] = useState("");
+    const [portError, setPortError] = useState("");
 
     const validateGithubLink = (link: string) => {
         const githubRegex = /^https?:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+$/;
