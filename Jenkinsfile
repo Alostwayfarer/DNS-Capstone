@@ -36,10 +36,10 @@ pipeline {
             // }
                 steps {
                     script {
-                        def currentBuildNumber = env.BUILD_NUMBER.toInteger()
+                        // def currentBuildNumber = 
                     
                         // Perform subtraction
-                        def adjustedBuildNumber = currentBuildNumber - 43
+                        def adjustedBuildNumber = env.BUILD_NUMBER.toInteger() - 43
                         
                         // Handle cases where BUILD_NUMBER is less than 30
                         if (adjustedBuildNumber < 0) {
@@ -50,7 +50,7 @@ pipeline {
                     env.ADJUSTED_BUILD_NUMBER = adjustedBuildNumber.toString()
             
                     
-                    echo "Original BUILD_NUMBER: ${currentBuildNumber}"
+                    // echo "Original BUILD_NUMBER: ${currentBuildNumber}"
                     echo "Adjusted BUILD_NUMBER (BUILD_NUMBER - 30): ${imageTag}"
                     
                     // Build the Docker image with the adjusted tag
@@ -107,7 +107,7 @@ pipeline {
             steps {
                 script {
                     // Define the image tags
-                    def buildNumberTag = (env.BUILD_NUMBER.toInteger() - 43) < 0 ? "0" : "${env.BUILD_NUMBER.toInteger() - 30}"
+                    def buildNumberTag = env.BUILD_NUMBER.toInteger() - 43
                     def latestTag = "latest"
                     
                     echo "Pushing Docker image with tag: ${buildNumberTag}"
