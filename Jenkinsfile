@@ -39,13 +39,16 @@ pipeline {
                         def currentBuildNumber = env.BUILD_NUMBER.toInteger()
                     
                         // Perform subtraction
-                        def adjustedBuildNumber = currentBuildNumber - 30
+                        def adjustedBuildNumber = currentBuildNumber - 40
                         
                         // Handle cases where BUILD_NUMBER is less than 30
                         if (adjustedBuildNumber < 0) {
                             adjustedBuildNumber = 0
                         }
                     def imageTag = adjustedBuildNumber.toString()
+                      // Convert back to string for tagging
+                    env.ADJUSTED_BUILD_NUMBER = adjustedBuildNumber.toString()
+            
                     
                     echo "Original BUILD_NUMBER: ${currentBuildNumber}"
                     echo "Adjusted BUILD_NUMBER (BUILD_NUMBER - 30): ${imageTag}"
@@ -124,19 +127,18 @@ pipeline {
                 }
             }
         }
-
         // stage('Deploy to ECS'){
         //     steps{
         //         sh 'aws ecs update-service --cluster DNS --service backend-service --force-new-deployment'
         //     }
         // }
-        post {
+    }
+    post {
             always {
                 // Optional: Clean up Docker images to save space
                 sh "docker rmi client-api:${env.ADJUSTED_BUILD_NUMBER} ${env.CLIENT_REGISTRY}:${env.ADJUSTED_BUILD_NUMBER} ${env.CLIENT_REGISTRY}:latest || true"
             }
         }
-    }
 }
 
 
