@@ -127,11 +127,14 @@ pipeline {
                 }
             }
         }
-        // stage('Deploy to ECS'){
-        //     steps{
-        //         sh 'aws ecs update-service --cluster DNS --service backend-service --force-new-deployment'
-        //     }
-        // }
+        stage('Deploy to ECS'){
+            when {
+                branch 'client-api'
+            }
+            steps{
+                sh 'aws ecs update-service --cluster DNS --service client-api-service --force-new-deployment'
+            }
+        }
     }
     post {
             always {
