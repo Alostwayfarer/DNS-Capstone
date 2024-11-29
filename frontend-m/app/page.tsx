@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,9 @@ export default function Home() {
   const [deploymentStep, setDeploymentStep] = useState(0)
   const [error, setError] = useState('')
   const router = useRouter()
+  const [generatedName, setGeneratedName] = useState('')
+  const [port, setPort] = useState('')
+  const [portError, setPortError] = useState('')
 
   const validateGithubLink = (link: string) => {
     const githubRegex = /^https?:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+$/
@@ -46,6 +49,34 @@ export default function Home() {
       await new Promise(resolve => setTimeout(resolve, 1500))
     }
   }
+
+  const generateRandomName = () => {
+    const adjectives = ['Happy', 'Quick', 'Calm', 'Brave', 'Wise'];
+    const nouns = ['Lion', 'Eagle', 'Wolf', 'Bear', 'Hawk'];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    return `${adj}-${noun}`;
+  };
+
+  // Add this useEffect to generate name on component mount
+  useEffect(() => {
+    setGeneratedName(generateRandomName());
+  }, []);
+
+  // Add port validation function
+  const validatePort = (value: string) => {
+    const portNumber = parseInt(value);
+    if (isNaN(portNumber)) {
+      setPortError('Port must be a number');
+      return false;
+    }
+    if (portNumber < 80 || portNumber > 65535) {
+      setPortError('Port must be between 80 and 65535');
+      return false;
+    }
+    setPortError('');
+    return true;
+  };
 
   const handleDeploy = async () => {
     if (!isValidLink) {
@@ -106,6 +137,8 @@ export default function Home() {
                 <p className="text-red-500 text-sm">Please enter a valid GitHub link.</p>
               )}
             </div>
+
+
             <div className="space-y-2">
               <Label htmlFor="deployment-type" className="text-gray-200">Deployment Type</Label>
               <Select onValueChange={setDeploymentType}>
@@ -119,6 +152,37 @@ export default function Home() {
                 </SelectContent>
               </Select>
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="deployment-name" className="text-gray-200">Deployment Name</Label>
+              <Input
+                id="deployment-name"
+                value={generatedName}
+                disabled
+                className="bg-gray-700 border-gray-600 text-white"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="port" className="text-gray-200">Port Number</Label>
+              <Input
+                id="port"
+                type="number"
+                min="80"
+                max="65535"
+                placeholder="8080"
+                value={port}
+                onChange={(e) => {
+                  setPort(e.target.value);
+                  validatePort(e.target.value);
+                }}
+                className={`bg-gray-700 border-gray-600 text-white placeholder-gray-400 ${portError ? 'border-red-500' : ''}`}
+              />
+              {portError && (
+                <p className="text-sm text-red-500">{portError}</p>
+              )}
+            </div>
+
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               onClick={handleDeploy}
