@@ -6,8 +6,9 @@ const collectDefaultMetrics = client.collectDefaultMetrics;
 collectDefaultMetrics();
 
 app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', client.register.contentType);
-  res.end(await client.register.metrics());
+  res.setHeader('Content-Type', client.register.contentType);
+  const metrics = await client.register.metrics();
+  res.send(metrics);
 });
 
 const PORT = process.env.PORT || 3003;
