@@ -23,17 +23,6 @@ pipeline {
             when {
                 branch 'client-api'
             }
-            // steps{
-            //     script{
-            //         // echo"biudling ${client_registry} : ${BUILD_NUMBER}"
-            //         // def client_registry = "311141548911.dkr.ecr.ap-south-1.amazonaws.com/client-api"
-            //         // def imageName = "${client_registry}:${BUILD_NUMBER}"
-            //         // dockerImage = docker.build(imageName, "./client-api")
-            //         // // sh "docker tag ${imageName} ${client_registry}:latest"
-            //         // sh "docker push ${client_registry}:latest"
-            //         // dockerImage= docker.build(client_registry + ":${BUILD_NUMBER}", "./client-api")
-            //     }
-            // }
                 steps {
                     script {
                         // def currentBuildNumber = 
@@ -90,16 +79,6 @@ pipeline {
                 }
         }
 
-        // stage('Push to ECR') {
-        //     steps {
-        //         script {
-        //             docker.withRegistry(clientRegistryURL, registryCredential) {
-        //                 dockerImage.push("${BUILD_NUMBER}")
-        //                 dockerImage.push("latest")
-        //             }
-        //         }
-        //     }
-        // }
         stage('Push client-api') {
             when {
                 branch 'client-api'
