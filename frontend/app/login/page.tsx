@@ -1,29 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const redirect = searchParams.get('redirect')
+    if (redirect === 'deploy') {
+      setError('Please log in to create a new deployment.')
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Implement login logic here
-    console.log('Logging in with:', email, password)
-    // Simulate login process
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    // After successful login, redirect to user's page
-    router.push('/user-id') // Replace 'user-id' with actual user ID
+    setError('')
+
+    try {
+      // Implement login logic here
+      console.log('Logging in with:', email, password)
+      // Simulate login process
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // Generate a random user ID
+      const userId = Math.random().toString(36).substr(2, 9)
+
+      // Check if we need to redirect to deploy page
+      const redirect = searchParams.get('redirect')
+      if (redirect === 'deploy') {
+        router.push('/')
+      } else {
+        router.push(`/${userId}`)
+      }
+    } catch (error) {
+      setError('Invalid email or password. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -69,6 +96,12 @@ export default function Login() {
               )}
             </Button>
           </form>
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
       <div className="mt-4">

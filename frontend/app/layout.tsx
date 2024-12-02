@@ -14,17 +14,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // This is a placeholder for user authentication status
-  const isLoggedIn = true // You should replace this with actual authentication logic
-  const userId = 'user-id' // Replace with actual user ID when authenticated
+  // You'll need to get the userId from your auth context/session
 
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-gray-900 text-white`}>
-        {isLoggedIn && <NavBar userId={userId} />}
-        {children}
+        {/* <NavBar userId={userId} /> */}
+        <main>
+          {children}
+        </main>
       </body>
     </html>
   )
 }
-

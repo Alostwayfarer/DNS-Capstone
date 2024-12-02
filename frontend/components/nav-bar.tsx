@@ -8,7 +8,7 @@ export function NavBar({ userId }: { userId: string }) {
         <Link href={`/${userId}`} className="text-xl font-bold">DNS Hosting</Link>
         <div className="space-x-4">
           <Link href={`/${userId}`} className="hover:text-blue-300">Deployments</Link>
-          <Link href="/settings" className="hover:text-blue-300">Settings</Link>
+          {/* <Link href="/settings" className="hover:text-blue-300">Settings</Link> */}
           <LogoutButton />
         </div>
       </div>

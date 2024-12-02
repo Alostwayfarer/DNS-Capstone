@@ -1,4 +1,9 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
-
-export default nextConfig;
+const nextConfig = {
+    env: {
+      NEXT_PUBLIC_SERVER_1_API: process.env.NEXT_PUBLIC_SERVER_1_API,
+      NEXT_PUBLIC_SERVER_2_API: process.env.NEXT_PUBLIC_SERVER_2_API,
+    },
+  };
+  
+  export default nextConfig;
+  

@@ -4,12 +4,21 @@ import axios from 'axios';
 // Create axios instances for different services
 export const buildServerApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BUILD_SERVER_URL || 'http://localhost:8011',
-  timeout: 10000 // 10 seconds
+  timeout: 100000, // 10 seconds,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+
 });
 
 export const clientServerApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_CLIENT_SERVER_URL || 'http://localhost:8012',
-  timeout: 10000 // 10 seconds
+  timeout: 100000, // 10 seconds
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
 });
 
 // Test function
