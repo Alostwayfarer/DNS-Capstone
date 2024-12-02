@@ -15,11 +15,11 @@ model User {
 }
 
 model Deployment {
-  status          String
   deployment_id   String         @id @default(uuid())
   github_link     String
   subdomain       String         @unique @map("AWS_link")
   deployment_type DeploymentType
+
   Status          BuildStatus?   @default(CLONING)
   user            User           @relation(fields: [userId], references: [user_id])
   userId          String
