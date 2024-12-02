@@ -2,6 +2,17 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'your-application'
+  - job_name: 'client-api'
+    scrape_interval: 15s  # Override global if needed
+    static_configs:
+      - targets:
+        - 'dns-loadbalancer-1931166303.ap-south-1.elb.amazonaws.com:80'
+
+
+  - job_name: 'frontend'
     static_configs:
       - targets: ['localhost:3003']
+
+  - job_name: 'build-server'
+    static_configs:
+      - targets: ['build-server/metrics']
