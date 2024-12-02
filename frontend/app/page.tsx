@@ -163,7 +163,7 @@ export default function Home() {
                         DNS Hosting
                     </CardTitle>
                     <CardDescription className="text-gray-400">
-                        Deploy your project in minutes :)
+                        Deploy your project with 3 steps in minutes ;)
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
