@@ -4,3 +4,4 @@ build-server-api/node_modules
 /node_modules
 try
 .env
+archive/node_modules
