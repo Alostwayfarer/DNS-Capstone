@@ -190,7 +190,7 @@ pipeline {
 
     post {
         always {
-            sh " docker rmi $(docker images -q) -f "
+            sh " docker rmi  ${env.FRONTEND_REPOSITORY}:${env.ADJUSTED_BUILD_NUMBER}  ${env.FRONTEND_REPOSITORY}:latest || true   "
         }
         success {
             echo "This will run only if successful"
