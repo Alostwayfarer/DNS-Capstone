@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,6 +26,36 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { NavBar } from "@/components/nav-bar";
+import { useDeploymentDataStore } from "@/store/deploymentStore";
+import { clientServerApi } from "@/api";
+
+// Define TypeScript interfaces
+interface LogEntry {
+    timestamp: number;
+    message: string;
+    id: string;
+}
+
+interface LogsResponse {
+    logs: LogEntry[];
+    nextToken: string;
+}
+interface Proxy {
+    proxy_id: string;
+    deployment_id: string;
+    subdomain: string;
+    AWS_link: string;
+}
+
+interface Deployment {
+    deployment_id: string;
+    github_link: string;
+    subdomain: string;
+    deployment_type: string;
+    Status: string;
+    userId: string;
+    Proxy: Proxy[];
+}
 
 export default function DeploymentPage({
     params,
@@ -36,6 +66,16 @@ export default function DeploymentPage({
     const [isDeleting, setIsDeleting] = useState(false);
     const router = useRouter();
 
+    const userId = params.userId;
+    const deployment_id = params.deploymentId;
+    const deployments = useDeploymentDataStore((state) => state.deployments);
+    const [deployment, setDeployment] = useState<Deployment | null>(null);
+    const [error, setError] = useState<string>("");
+
+    const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState<boolean>(false);
+    const [logsError, setLogsError] = useState<string>("");
+
     const handleDelete = async () => {
         setIsDeleting(true);
         // Implement delete logic here
@@ -45,7 +85,54 @@ export default function DeploymentPage({
         // After successful deletion, redirect to user's main page
         router.push(`/${params.userId}`);
     };
-    const userId = "user123"; // Replace with actual user ID from auth
+
+    useEffect(() => {
+        if (userId && deployment_id) {
+            const foundDeployment = deployments.find(
+                (dep) =>
+                    dep.deployment_id === deployment_id && dep.userId === userId
+            );
+            if (foundDeployment) {
+                setDeployment(foundDeployment);
+            } else {
+                setError("Deployment not found.");
+            }
+        } else {
+            setError("Invalid parameters.");
+        }
+    }, [userId, deployment_id, deployments]);
+
+    const fetchLogs = async () => {
+        if (!deployment) return;
+        setLoadingLogs(true);
+        setLogsError("");
+        try {
+            const response = await clientServerApi.get<LogsResponse>(
+                `/logs/${deployment.subdomain}`
+            );
+            setLogs(response.data.logs);
+        } catch (error) {
+            console.error("Error fetching logs:", error);
+            setLogsError("Failed to fetch logs.");
+        } finally {
+            setLoadingLogs(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLogs();
+    }, [deployment]);
+
+    if (!deployment) {
+        return (
+            <div className="text-center mt-10">
+                Loading deployment details...
+            </div>
+        );
+    }
+    if (error) {
+        return <div className="text-red-500 text-center mt-10">{error}</div>;
+    }
 
     return (
         <>
@@ -93,26 +180,40 @@ export default function DeploymentPage({
                                 <p>
                                     GitHub Link:{" "}
                                     <a
-                                        href="https://github.com/username/repo"
+                                        href={deployment.github_link}
                                         className="text-blue-400 hover:underline"
                                     >
-                                        https://github.com/username/repo
+                                        {deployment.github_link}{" "}
                                     </a>
                                 </p>
                                 <p>
-                                    Subdomain:{" "}
+                                    Shortenlink:{" "}
                                     <a
-                                        href="http://klsh.localhost:8000/"
+                                        href={`http://${deployment.subdomain}.localhost:8000`}
                                         className="font-mono"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                     >
-                                        klsh.localhost:8000
+                                        {deployment.subdomain}
+                                    </a>
+                                </p>
+                                <p>
+                                    AWS LINK:{" "}
+                                    <a
+                                        href={`http://${deployment.Proxy[0].AWS_link}`}
+                                        className="font-mono"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        {deployment.Proxy[0].AWS_link}
                                     </a>
                                 </p>
                                 <p>
                                     Deployment Type:{" "}
-                                    <Badge variant="outline">Frontend</Badge>
+                                    <span className=" border-lime-800">
+                                        {deployment.deployment_type}
+                                    </span>
+                                    {/* <Badge variant="outline"></Badge> */}
                                 </p>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
@@ -172,12 +273,12 @@ export default function DeploymentPage({
                                 <ul className="list-disc pl-5 space-y-2 text-gray-300">
                                     <li>
                                         SSL:{" "}
-                                        <Badge variant="success">Enabled</Badge>
+                                        <Badge variant="default">Enabled</Badge>
                                     </li>
                                     <li>Last security scan: 2 days ago</li>
                                     <li>
                                         Vulnerabilities detected:{" "}
-                                        <Badge variant="success">None</Badge>
+                                        <Badge variant="outline">None</Badge>
                                     </li>
                                 </ul>
                             </CardContent>
@@ -194,10 +295,10 @@ export default function DeploymentPage({
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <ul className="space-y-2 text-gray-300">
+                                {/* <ul className="space-y-2 text-gray-300">
                                     <li className="flex items-center">
                                         <Badge
-                                            variant="success"
+                                            variant="default"
                                             className="mr-2"
                                         >
                                             Success
@@ -222,7 +323,31 @@ export default function DeploymentPage({
                                         </Badge>
                                         Code pushed to repository (2 hours ago)
                                     </li>
-                                </ul>
+                                </ul> */}
+
+                                {logsError && (
+                                    <div className="text-red-500 mb-4">
+                                        {logsError}
+                                    </div>
+                                )}
+                                <div className="max-h-64 overflow-y-auto bg-gray-700 p-4 rounded">
+                                    <ul className="space-y-2">
+                                        {logs.map((log) => (
+                                            <li
+                                                key={log.id}
+                                                className="text-gray-300 text-sm"
+                                            >
+                                                <span className="text-gray-500">
+                                                    {new Date(
+                                                        log.timestamp
+                                                    ).toLocaleString()}
+                                                    :
+                                                </span>{" "}
+                                                {log.message}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

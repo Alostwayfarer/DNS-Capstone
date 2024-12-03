@@ -5,14 +5,14 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const port = process.env.PORT || 8000;
 const proxy = httpproxy.createProxy();
-const client = require("prom-client") //Metric collection 
+const client = require("prom-client"); //Metric collection
 
 const collectDefaultMetrics = client.collectDefaultMetrics;
 
-collectDefaultMetrics({register: client.register}); //Collecting default metrics
+collectDefaultMetrics({ register: client.register }); //Collecting default metrics
 
 app.get("/metrics", async (req, res) => {
-    res.setHeader("Content-Type", client.register.contentType)
+    res.setHeader("Content-Type", client.register.contentType);
     const metrics = await client.register.metrics();
     res.send(metrics);
 });
@@ -34,9 +34,13 @@ app.use(async (req, res) => {
     console.log(parts);
 
     if (parts.length === 1) {
-        return res.json({
-            error: "give sub domain",
-            example: "api.localhost:8000",
+        // return res.json({
+        //     error: "give sub domain",
+        //     example: "api.localhost:8000",
+        // });
+        return proxy.web(req, res, {
+            target: "http://frontend-854925512.ap-south-1.elb.amazonaws.com/",
+            changeOrigin: true,
         });
     }
 

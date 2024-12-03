@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,10 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-import { clientServerApi, buildServerApi, testConnection } from "@/api";
+// import { buildServerApi } from "@/api";
+import { buildServerApi } from "@/api";
+import { useDeploymentStore } from "@/store/deploymentStore";
+// import { buildServerApi } from "@/api";
 
 const deploymentSteps = [
     "Validating GitHub link...",
@@ -39,11 +42,14 @@ export default function Home() {
     const [isValidLink, setIsValidLink] = useState(true);
     const [isDeploying, setIsDeploying] = useState(false);
     const [deploymentStep, setDeploymentStep] = useState(0);
-    const [error, setError] = useState("");
+    const [error, setError] = useState();
     const router = useRouter();
     const [generatedName, setGeneratedName] = useState("");
-    const [port, setPort] = useState("");
+    const [port, setPort] = useState(8080);
     const [portError, setPortError] = useState("");
+    const setUserId = useDeploymentStore((state) => state.setUserId);
+
+    const hereuserId = useDeploymentStore((state) => state.userId);
 
     const validateGithubLink = (link: string) => {
         const githubRegex = /^https?:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+$/;
@@ -64,8 +70,50 @@ export default function Home() {
     };
 
     const generateRandomName = () => {
-        const adjectives = ["Happy", "Quick", "Calm", "Brave", "Wise"];
-        const nouns = ["Lion", "Eagle", "Wolf", "Bear", "Hawk"];
+        const adjectives = [
+            "happy",
+            "quick",
+            "calm",
+            "brave",
+            "wise",
+            "eager",
+            "bright",
+            "gentle",
+            "kind",
+            "lively",
+            "mighty",
+            "noble",
+            "proud",
+            "sharp",
+            "swift",
+            "tender",
+            "vast",
+            "witty",
+            "young",
+            "zesty",
+        ];
+        const nouns = [
+            "lion",
+            "eagle",
+            "wolf",
+            "bear",
+            "hawk",
+            "tiger",
+            "falcon",
+            "panther",
+            "leopard",
+            "cheetah",
+            "buffalo",
+            "rhino",
+            "elephant",
+            "giraffe",
+            "zebra",
+            "kangaroo",
+            "koala",
+            "panda",
+            "otter",
+            "whale",
+        ];
         const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
         const noun = nouns[Math.floor(Math.random() * nouns.length)];
         return `${adj}-${noun}`;
@@ -130,30 +178,35 @@ export default function Home() {
     // };
 
     const handleDeploy = async () => {
-        console.error("Deploying...");
-        testConnection();
+        setIsDeploying(true);
+        console.log("Deploying...");
         const payload = {
+            userId: hereuserId,
             repoUrl: githubLink,
             DeploymentName: generatedName,
             buildType: deploymentType,
-            port: parseInt(port),
+            port: port,
         };
 
         try {
             console.log("Deploying with payload:", payload);
-            const response = await buildServerApi.get("/health");
+            const response = await buildServerApi.post("/deploy-repo", payload);
             console.log("API Response:", response.data);
 
             if (response.data.success) {
                 const userId = response.data.deployment.userId;
-                await simulateDeployment();
+                setUserId(userId);
                 console.log("User ID:", userId);
-                router.push(`/${userId}/deployments`);
+                await simulateDeployment();
+                setIsDeploying(false);
+                router.push(`/${userId}`);
             } else {
                 console.log("Deployment failed:", response.data);
+                setError(response.data);
+                setIsDeploying(false);
             }
         } catch (error) {
-            console.log("Error deploying: ::: ", error);
+            console.log(error);
         }
     };
 
