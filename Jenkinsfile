@@ -111,7 +111,7 @@ pipeline {
                 branch 'client-api'
             }
             steps{
-                sh 'aws ecs update-service --cluster DNS --service client-api-service --force-new-deployment'
+                sh 'aws ecs update-service --cluster DNS --service client-api --force-new-deployment'
             }
         }
     }
