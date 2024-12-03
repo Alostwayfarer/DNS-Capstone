@@ -191,8 +191,8 @@ pipeline {
     post {
         always {
             echo "This will always run"
-            sh""" 
-             docker rmi $(docker images -q) -f
+            sh """ 
+                docker rmi $(docker images -q) -f
             """
         }
         success {
