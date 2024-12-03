@@ -130,6 +130,7 @@ export default function Home() {
     // };
 
     const handleDeploy = async () => {
+        console.error("Deploying...");
         testConnection();
         const payload = {
             repoUrl: githubLink,
@@ -139,7 +140,8 @@ export default function Home() {
         };
 
         try {
-            const response = await buildServerApi.post("/deploy-repo", payload);
+            console.log("Deploying with payload:", payload);
+            const response = await buildServerApi.get("/health");
             console.log("API Response:", response.data);
 
             if (response.data.success) {
@@ -148,10 +150,10 @@ export default function Home() {
                 console.log("User ID:", userId);
                 router.push(`/${userId}/deployments`);
             } else {
-                console.error("Deployment failed:", response.data);
+                console.log("Deployment failed:", response.data);
             }
         } catch (error) {
-            console.error("Error deploying:", error);
+            console.log("Error deploying: ::: ", error);
         }
     };
 

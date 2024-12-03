@@ -214,9 +214,7 @@ app.post("/deploy-repo", async (req, res) => {
             default:
                 return res.status(400).json({ error: "Invalid buildType" });
         }
-
         console.log("default value=>", dockerFileName, defaultPort, defaultCMD);
-
         const dockerFilePath = path.join(tempDir, dockerFileName);
 
         // Create Dockerfile based on buildType if it doesn't exist
@@ -269,84 +267,6 @@ app.post("/deploy-repo", async (req, res) => {
             const dockerFileContent = fs.readFileSync(dockerFilePath, "utf-8");
             console.log("Existing Dockerfile content:\n", dockerFileContent);
         }
-
-        // // Determine Dockerfile and default port based on buildType
-        // let dockerFileName;
-        // let defaultPort;
-        // switch (buildType.toUpperCase()) {
-        //     case "VITE":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 80;
-        //         break;
-        //     case "NODEJS":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 3000;
-        //         break;
-        //     case "PYTHON":
-        //         dockerFileName = "Dockerfile";
-        //         defaultPort = 3000;
-        //         break;
-        //     default:
-        //         return res.status(400).json({ error: "Invalid buildType" });
-        // }
-
-        // const dockerFilePath = path.join(tempDir, dockerFileName);
-
-        // // Create Dockerfile based on buildType if it doesn't exist
-        // if (!fs.existsSync(dockerFilePath)) {
-        //     let dockerContent;
-        //     if (buildType.toUpperCase() === "VITE") {
-        //         dockerContent = `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["npm", "run", "dev"]
-        //                         `;
-        //     } else if (buildType.toUpperCase() === "NODEJS") {
-        //         dockerContent = `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["node", "server.js"]
-        //                         `;
-        //     } else if (buildType.toUpperCase() === "PYTHON") {
-        //         dockerContent = `
-        //         FROM python:3.9
-        //         WORKDIR /app
-        //         COPY requirements.txt ./
-        //         RUN pip install --no-cache-dir -r requirements.txt
-        //         COPY . .
-        //         EXPOSE ${port || defaultPort}
-        //         CMD ["python", "app.py"]
-        //         `;
-        //     }
-        //     fs.writeFileSync(dockerFilePath, dockerContent.trim());
-        //     console.log(`${dockerFileName} created`);
-        // }
-
-        // // Check if Dockerfile exists, if not use a template
-        // if (!fs.existsSync(dockerFilePath)) {
-        //     console.log("Dockerfile not found, creating template...");
-        //     fs.writeFileSync(
-        //         dockerFilePath,
-        //         `
-        //         FROM node:lts
-        //         WORKDIR /app
-        //         COPY package*.json ./
-        //         RUN npm install
-        //         COPY . .
-        //         EXPOSE ${port}
-        //         CMD ["npm", "run","dev"]
-        //     `
-        //     );
-        //     console.log("Dockerfile template created");
-        // }
 
         // Build Docker image
         console.log("Building Docker image...");
