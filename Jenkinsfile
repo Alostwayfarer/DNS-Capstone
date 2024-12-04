@@ -209,6 +209,7 @@ pipeline {
             echo "This will run only if successful"
         }
         failure {
+            emailext attachLog: true, body: 'this is test ', compressLog: true, subject: 'this is test email', to: 'genaidikshant@gmail.com'
             echo "This will run only if failed"
         }
         unstable {
