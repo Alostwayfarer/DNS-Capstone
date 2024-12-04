@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        nodejs "20.18.1"
+    }
     
     environment {
         BRANCH_NAME = "${env.BRANCH_NAME}"
@@ -18,9 +21,9 @@ pipeline {
                 echo "loginn"
                 sh "aws configure list"
                 sh "google-chrome-stable --version"
+                sh "npm --version"
                 echo "Building the app"
-                sh "source ~/.bashrc"
-                echo "$PATH"
+              
             }
         }
 
