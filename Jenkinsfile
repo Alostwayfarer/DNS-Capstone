@@ -19,6 +19,8 @@ pipeline {
                 sh "aws configure list"
                 sh "google-chrome-stable --version"
                 echo "Building the app"
+                sh "source ~/.bashrc"
+                echo "$PATH"
             }
         }
 
