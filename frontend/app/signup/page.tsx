@@ -15,8 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useDeploymentStore } from "@/store/deploymentStore";
-export default function Login() {
+// import { useDeploymentStore } from "@/store/deploymentStore";
+export default function SignUp() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +53,7 @@ export default function Login() {
                 router.push(`/${userId}`);
             }
         } catch (error) {
-            setError("Invalid email or password. Please try again.");
+            setError("Invalid email or password. Please try again." + error);
         } finally {
             setIsLoading(false);
         }
@@ -124,10 +124,10 @@ export default function Login() {
             </Card>
             <div className="mt-4">
                 <Link
-                    href="/signup"
+                    href="/login"
                     className="text-blue-400 hover:text-blue-300"
                 >
-                    Don't have an account? Sign Up
+                    have an account? Log in
                 </Link>
             </div>
         </div>

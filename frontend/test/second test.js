@@ -4,7 +4,7 @@ import { assert } from "chai";
 import { Builder } from "selenium-webdriver";
 import { Options } from "selenium-webdriver/chrome.js";
 
-describe("test if title is returned ", function () {
+describe("test if title not equal to  ", function () {
     let driver;
 
     before(async () => {
@@ -25,6 +25,6 @@ describe("test if title is returned ", function () {
         let title = await driver.getTitle();
 
         console.log(title);
-        assert.equal(title, "DNS Hosting", "Website name not correct");
+        assert.equal(title, "DNSHosting", "Website name not correct");
     });
 });

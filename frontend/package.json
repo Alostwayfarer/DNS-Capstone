@@ -2,11 +2,13 @@
   "name": "frontend-m",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test":"mocha --no-timeouts" 
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.2",

@@ -10,17 +10,27 @@ pipeline {
         RegistryURL = "https:311141548911.dkr.ecr.ap-south-1.amazonaws.com/"
         SERVICE_NAME= "frontend"
     }
-    
+
     stages {
         stage('Initialize') {
             steps {
                 sh "aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 311141548911.dkr.ecr.ap-south-1.amazonaws.com"
                 echo "loginn"
                 sh "aws configure list"
+                sh "google-chrome-stable --version"
                 echo "Building the app"
-            
+            }
         }
-    }
+
+
+        stage('fronend test'){
+            when {
+                branch 'frontend'
+            }
+            steps{
+                sh "cd frontend && npm install && npm run test"
+            }
+        }
 
         stage('Build client-api') {
             when {
@@ -65,6 +75,7 @@ pipeline {
                 }
             }
         }
+
         stage('Build frontend') {
             when {
                 branch 'frontend'
@@ -110,7 +121,6 @@ pipeline {
             }
         }
 
-
         stage('Push client-api') {
             when {
                 branch 'client-api'
@@ -138,8 +148,6 @@ pipeline {
                 }
             }
         }
-
-
 
         stage('Push frontend') {
             when {
@@ -169,15 +177,15 @@ pipeline {
             }
         }
 
-
         stage('Deploy to ECS'){
             when {
                 branch 'client-api'
             }
             steps{
                     sh 'aws ecs update-service --cluster DNS --service backend-service --force-new-deployment'
-                }
-            } 
+            }
+        } 
+
         stage('Deploy frontend to ECS'){
             when {
                 branch 'frontend'
@@ -185,8 +193,8 @@ pipeline {
             steps{
                     sh 'aws ecs update-service --cluster DNS --service frontend --force-new-deployment'
                 }
-            }
         }
+    }
 
     post {
         always {
