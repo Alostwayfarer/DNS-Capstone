@@ -6,7 +6,7 @@ const client = require("prom-client");
 const prisma = new PrismaClient();
 // const express = require("express");
 // const app = express();
-const app = require("./server");
+const app = require("../server");
 
 // Mock dependencies
 jest.mock("@prisma/client", () => ({

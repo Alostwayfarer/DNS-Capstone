@@ -19,8 +19,20 @@ pipeline {
                 sh"aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 311141548911.dkr.ecr.ap-south-1.amazonaws.com"
                 sh "aws configure list"
                 echo "Building the app"
+                sh "npm --version"
             }
         }
+
+        stage('Test client-api') {
+            when {
+                branch 'client-api'
+                         }
+            steps {
+                    dir('client-api') {
+                        sh 'npm test'
+                        }
+                    }
+                }
 
         stage('Build client-api') {
             when {
@@ -124,7 +136,28 @@ pipeline {
                 sh "docker rmi ${env.CLIENT_REGISTRY}:${env.ADJUSTED_BUILD_NUMBER} ${env.CLIENT_REGISTRY}:latest || true"
             }
                success {
-            echo "This will run only if successful"
+script{
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelinestatus = currentBuild.result  ?:"UKNOWN"
+                // def color = pipelinestatus.toLowerCase() == 'success' ? 'green' : 'red'
+                def body = """ 
+                <html>
+                    <body>
+                        <div style="border: 4px solid green; padding: 10x ">
+                            <h2>${jobName} - Build ${buildNumber}</h2>
+                            <div style="background-color: green; padding: 10x;">
+                                <h3 style="color: white;"> Pipeline status : ${pipelinestatus} and ${currentBuild.result} </h3>
+                            </div>
+                            <p> check Build logs : <a href="${env.BUILD_URL}">HERE</a> </p>
+                        </div>
+                    </body>
+                </html>
+                """
+
+                emailext (attachLog: true, body: body, compressLog: true, subject: "${jobName} - Build ${buildNumber} - ${currentBuild.result} ", to: 'genaidikshant@gmail.com', mimeType: 'text/html')
+            }
+        
         }
         failure {
             // emailext attachLog: true, body: 'this is test ', compressLog: true, subject: 'this is test email', to: 'genaidikshant@gmail.com'
