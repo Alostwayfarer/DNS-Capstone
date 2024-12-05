@@ -29,7 +29,7 @@ pipeline {
                          }
             steps {
                     dir('client-api') {
-                        sh 'npm test'
+                        sh 'npm install && npm test'
                         }
                     }
                 }
