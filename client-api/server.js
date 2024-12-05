@@ -1,10 +1,10 @@
-const express = require("express");
 const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
 require("dotenv").config();
 const client = require("prom-client"); //Metric collection
 const prisma = new PrismaClient();
 
+const express = require("express");
 const app = express();
 const port = process.env.PORT || 8001;
 

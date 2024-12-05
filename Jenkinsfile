@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        nodejs "20.18.1"
+    }
     
     environment {
         BRANCH_NAME = "${env.BRANCH_NAME}"
@@ -120,7 +123,41 @@ pipeline {
                 // Optional: Clean up Docker images to save space
                 sh "docker rmi ${env.CLIENT_REGISTRY}:${env.ADJUSTED_BUILD_NUMBER} ${env.CLIENT_REGISTRY}:latest || true"
             }
+               success {
+            echo "This will run only if successful"
+        }
+        failure {
+            // emailext attachLog: true, body: 'this is test ', compressLog: true, subject: 'this is test email', to: 'genaidikshant@gmail.com'
+            // echo "This will run only if failed"
+            script{
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                def pipelinestatus = currentBuild.result  ?:"UKNOWN"
+                // def color = pipelinestatus.toLowerCase() == 'success' ? 'green' : 'red'
+                def body = """ 
+                <html>
+                    <body>
+                        <div style="border: 4px solid red; padding: 10x ">
+                            <h2>${jobName} - Build ${buildNumber}</h2>
+                            <div style="background-color: red; padding: 10x;">
+                                <h3 style="color: white;"> Pipeline status : ${pipelinestatus} and ${currentBuild.result} </h3>
+                            </div>
+                            <p> check Build logs : <a href="${env.BUILD_URL}">HERE</a> </p>
+                        </div>
+                    </body>
+                </html>
+                """
+
+                emailext (attachLog: true, body: body, compressLog: true, subject: "${jobName} - Build ${buildNumber} - ${currentBuild.result} ", to: 'genaidikshant@gmail.com', mimeType: 'text/html')
+            }
+        }
+        unstable {
+            echo "This will run only if the run was marked as unstable"
+        }
+        changed {
+            echo "This will run only if the state of the Pipeline has changed"
+            echo "For example, if the Pipeline was previously failing but is now successful"
+        }
         }
 }
-
 
