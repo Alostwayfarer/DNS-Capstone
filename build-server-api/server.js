@@ -49,7 +49,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8011;
 
 const awsCredentials = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,

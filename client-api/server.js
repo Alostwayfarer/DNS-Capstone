@@ -4,7 +4,7 @@ require("dotenv").config();
 const client = require("prom-client") //Metric collection 
 
 const app = express();
-const port = process.env.PORT || 8001;
+const port = process.env.PORT || 8012;
 
 const collectDefaultMetrics = client.collectDefaultMetrics;
 

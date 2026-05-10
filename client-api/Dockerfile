@@ -12,6 +12,6 @@ RUN npm install
 #Bundle app souce
 COPY . .
 
-EXPOSE 8000
+EXPOSE 8012
 
 CMD [ "npm", "run", "dev"]

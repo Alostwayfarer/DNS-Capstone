@@ -4,7 +4,7 @@ import axios from 'axios';
 // Create axios instances for different services
 export const buildServerApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BUILD_SERVER_URL || 'http://localhost:8011',
-  timeout: 100000, // 10 seconds,
+  timeout: 100000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -14,7 +14,7 @@ export const buildServerApi = axios.create({
 
 export const clientServerApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_CLIENT_SERVER_URL || 'http://localhost:8012',
-  timeout: 100000, // 10 seconds
+  timeout: 100000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -33,6 +33,20 @@ export const testConnection = async () => {
     console.error('Connection failed:', error);
     throw error;
   }
+};
+
+export const deployBuild = async (payload = {}) => {
+  const response = await buildServerApi.post('/deploy-repo', payload);
+  return response.data;
+};
+
+export const getLogs = async (repoName = '') => {
+  if (!repoName) {
+    return { logs: [], nextToken: null };
+  }
+
+  const response = await clientServerApi.get(`/logs/${repoName}`);
+  return response.data;
 };
 
 

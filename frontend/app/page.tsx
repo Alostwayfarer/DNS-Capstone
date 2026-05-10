@@ -146,7 +146,7 @@ export default function Home() {
                 const userId = response.data.deployment.userId;
                 await simulateDeployment();
                 console.log("User ID:", userId);
-                router.push(`/${userId}/deployments`);
+                router.push(`/${userId}`);
             } else {
                 console.error("Deployment failed:", response.data);
             }
@@ -160,10 +160,10 @@ export default function Home() {
             <Card className="w-full max-w-md bg-gray-800 border-gray-700">
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-white">
-                        DNS Hosting
+                        DNS
                     </CardTitle>
                     <CardDescription className="text-gray-400">
-                        Deploy your project in seconds
+                        Deploy websites and APIs on AWS ECS
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

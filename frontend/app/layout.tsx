@@ -5,8 +5,8 @@ import { NavBar } from '@/components/nav-bar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'DNS Hosting',
-  description: 'A simple DNS hosting platform',
+  title: 'DNS',
+  description: 'Deploy websites and APIs on AWS ECS',
 }
 
 export default function RootLayout({
